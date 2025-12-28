@@ -1,15 +1,26 @@
 # Go Webapp Template - Task Runner
 
+# Template module path (updated by setup after gonew)
+template_module := "codeberg.org/oliverandrich/go-webapp-template"
+
 # Default: show available commands
 default:
     @just --list
 
-# Install dependencies and generate code
+# Initialize project: update module paths (after gonew) and install dependencies
 setup:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    current_module=$(head -1 go.mod | awk '{print $2}')
+    if [ "$current_module" != "{{template_module}}" ]; then
+        echo "Updating module path: {{template_module}} → $current_module"
+        find . -name "*.templ" -exec sed -i '' "s|{{template_module}}|$current_module|g" {} \;
+    fi
     go mod download
     just htmx
     just templ
     just css
+    echo "Setup complete. Run 'just dev' to start development server."
 
 # Download HTMX
 htmx:
