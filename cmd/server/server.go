@@ -17,6 +17,7 @@ import (
 	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/services/auth"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/services/session"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/sse"
 	"github.com/go-chi/chi/v5"
 	"github.com/lmittmann/tint"
 	"github.com/urfave/cli/v3"
@@ -93,6 +94,9 @@ func runServer(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("failed to create session manager: %w", err)
 	}
 
+	// Create SSE hub for real-time updates
+	sseHub := sse.NewHub()
+
 	// Setup chi router
 	r := chi.NewRouter()
 
@@ -102,6 +106,7 @@ func runServer(ctx context.Context, cmd *cli.Command) error {
 		repo:           repo,
 		sessionManager: sessionManager,
 		authService:    authService,
+		sseHub:         sseHub,
 		logger:         logger,
 	}
 	setupRoutes(r, deps)

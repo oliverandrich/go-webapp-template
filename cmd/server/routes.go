@@ -13,6 +13,7 @@ import (
 	"codeberg.org/oliverandrich/go-webapp-template/internal/middleware"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/services/auth"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/sse"
 	"github.com/alexedwards/scs/v2"
 	"github.com/go-chi/chi/v5"
 )
@@ -23,6 +24,7 @@ type routerDeps struct {
 	repo           *repository.Repository
 	sessionManager *scs.SessionManager
 	authService    *auth.Service
+	sseHub         *sse.Hub
 	logger         *slog.Logger
 }
 
@@ -57,11 +59,15 @@ func setupRoutes(r chi.Router, deps *routerDeps) {
 		r.Post("/logout", authHandler.Logout)
 	})
 
+	// SSE handler for real-time updates
+	sseHandler := handlers.NewSSEHandler(deps.sseHub, deps.sessionManager)
+
 	// Protected routes - require authentication
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.RequireAuth)
 
 		r.Get("/", h.Index)
+		r.Get("/events", sseHandler.Events)
 	})
 
 	// 404 handler

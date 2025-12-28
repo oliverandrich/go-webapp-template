@@ -22,10 +22,11 @@ setup:
     just css
     echo "Setup complete. Run 'just dev' to start development server."
 
-# Download HTMX
+# Download HTMX and extensions
 htmx:
     curl -sL https://unpkg.com/htmx.org@2/dist/htmx.min.js -o static/js/htmx.min.js
-    @echo "Downloaded htmx.min.js (latest 2.x)"
+    curl -sL https://unpkg.com/htmx-ext-sse@2/sse.js -o static/js/htmx-sse.js
+    @echo "Downloaded htmx.min.js and htmx-sse.js (latest 2.x)"
 
 # Run development server with live reload
 dev:
