@@ -151,6 +151,8 @@ This keeps server code simple while enabling SPA-like navigation.
 
 ## Deployment
 
+### Binary
+
 ```bash
 # Build
 just build
@@ -160,6 +162,12 @@ just build
 ```
 
 For production, use a reverse proxy (nginx, Caddy) for TLS termination.
+
+## CI/CD
+
+This template includes Woodpecker CI configuration:
+
+- `.woodpecker/test.yml` - Runs on push/PR: generates templates, builds CSS, runs tests
 
 ## License
 
