@@ -133,22 +133,6 @@ just css      # Build Tailwind CSS
 └── data/                # SQLite database (gitignored)
 ```
 
-## HTMX Pattern
-
-This template uses a simple HTMX pattern: the server always renders full pages, and the client uses `hx-select` to extract content for partial updates.
-
-```html
-<a href="/dashboard"
-   hx-get="/dashboard"
-   hx-select="#main-content"
-   hx-target="#main-content"
-   hx-push-url="true">
-   Dashboard
-</a>
-```
-
-This keeps server code simple while enabling SPA-like navigation.
-
 ## Deployment
 
 ### Binary
