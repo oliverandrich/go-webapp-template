@@ -1,0 +1,29 @@
+# Binaries
+bin/
+tmp/
+
+# Generated files
+*_templ.go
+static/css/output.css
+
+# Data
+data/
+
+# Config (keep example)
+config.toml
+
+# Dependencies
+node_modules/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+build-errors.log

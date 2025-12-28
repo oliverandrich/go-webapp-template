@@ -1,0 +1,61 @@
+// Copyright 2025 Oliver Andrich
+// Licensed under the EUPL-1.2
+
+package auth
+
+import (
+	"codeberg.org/oliverandrich/go-webapp-template/internal/i18n"
+	"codeberg.org/oliverandrich/go-webapp-template/templates/components"
+	"codeberg.org/oliverandrich/go-webapp-template/templates/layouts"
+)
+
+templ Login(email string, rememberMe bool, errorMsg string, nextURL string) {
+	@layouts.AuthLayout(i18n.T(ctx, "auth_login_title")) {
+		<div class="bg-white rounded-lg shadow p-6">
+			<h1 class="text-2xl font-bold text-gray-900 mb-6">{ i18n.T(ctx, "auth_login_title") }</h1>
+			if errorMsg != "" {
+				<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+					{ errorMsg }
+				</div>
+			}
+			<form method="POST" action="/auth/login" class="space-y-4">
+				@components.CSRFInput()
+				if nextURL != "" {
+					<input type="hidden" name="next" value={ nextURL }/>
+				}
+				<div>
+					<label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+						{ i18n.T(ctx, "auth_login_email") }
+					</label>
+					<input type="email" id="email" name="email" value={ email } required
+						class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"/>
+				</div>
+				<div>
+					<label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+						{ i18n.T(ctx, "auth_login_password") }
+					</label>
+					<input type="password" id="password" name="password" required
+						class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"/>
+				</div>
+				<div class="flex items-center">
+					<input type="checkbox" id="remember_me" name="remember_me"
+						if rememberMe {
+							checked
+						}
+						class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"/>
+					<label for="remember_me" class="ml-2 block text-sm text-gray-700">
+						{ i18n.T(ctx, "auth_login_remember") }
+					</label>
+				</div>
+				<button type="submit"
+					class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer">
+					{ i18n.T(ctx, "auth_login_submit") }
+				</button>
+			</form>
+			<p class="mt-4 text-center text-sm text-gray-600">
+				{ i18n.T(ctx, "auth_login_no_account") }
+				<a href="/auth/register" class="text-blue-600 hover:text-blue-500">{ i18n.T(ctx, "auth_login_register_link") }</a>
+			</p>
+		</div>
+	}
+}

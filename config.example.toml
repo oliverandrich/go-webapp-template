@@ -1,0 +1,39 @@
+# Go Webapp Template Configuration
+# Copy this file to config.toml and adjust values as needed.
+#
+# Configuration priority (highest to lowest):
+#   1. Command-line flags (e.g., --port 3000)
+#   2. Environment variables (e.g., PORT=3000)
+#   3. This config file
+#   4. Default values
+
+[server]
+host = "localhost"
+port = 8080
+# base_url = "http://localhost:8080"  # Auto-generated if not set
+
+[database]
+# SQLite database path (or :memory: for in-memory database)
+path = "./data/app.db"
+
+[auth]
+# Registration modes:
+#   "internal" - No email verification (LAN/family use)
+#   "open"     - Open registration (public internet)
+#   "closed"   - Admin-only user creation
+registration_mode = "internal"
+
+# Secret key for session encryption (CHANGE THIS IN PRODUCTION!)
+session_secret = ""
+
+# Session settings
+session_duration = 24       # Hours for normal sessions
+remember_me_duration = 720  # Hours for "remember me" sessions (30 days)
+
+# Cookie settings
+cookie_name = "session"
+cookie_secure = false       # Set to true when using HTTPS via reverse proxy
+
+[log]
+level = "info"    # debug, info, warn, error
+format = "text"   # text, json

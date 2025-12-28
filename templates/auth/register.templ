@@ -1,0 +1,100 @@
+// Copyright 2025 Oliver Andrich
+// Licensed under the EUPL-1.2
+
+package auth
+
+import (
+	"codeberg.org/oliverandrich/go-webapp-template/internal/i18n"
+	"codeberg.org/oliverandrich/go-webapp-template/templates/components"
+	"codeberg.org/oliverandrich/go-webapp-template/templates/layouts"
+)
+
+templ Register(email string, errors []string, helpTexts []string) {
+	@layouts.AuthLayout(i18n.T(ctx, "auth_register_title")) {
+		<div class="bg-white rounded-lg shadow p-6">
+			<h1 class="text-2xl font-bold text-gray-900 mb-6">{ i18n.T(ctx, "auth_register_title") }</h1>
+			if len(errors) > 0 {
+				<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+					<ul class="list-disc list-inside">
+						for _, err := range errors {
+							<li>{ err }</li>
+						}
+					</ul>
+				</div>
+			}
+			<form method="POST" action="/auth/register" class="space-y-4">
+				@components.CSRFInput()
+				<div>
+					<label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+						{ i18n.T(ctx, "auth_register_email") }
+					</label>
+					<input type="email" id="email" name="email" value={ email } required
+						class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"/>
+				</div>
+				<div>
+					<label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+						{ i18n.T(ctx, "auth_register_password") }
+					</label>
+					<input type="password" id="password" name="password" required
+						class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"/>
+					if len(helpTexts) > 0 {
+						<ul class="mt-1 text-xs text-gray-500 list-disc list-inside">
+							for _, text := range helpTexts {
+								<li>{ text }</li>
+							}
+						</ul>
+					}
+				</div>
+				<div>
+					<label for="password_confirm" class="block text-sm font-medium text-gray-700 mb-1">
+						{ i18n.T(ctx, "auth_register_confirm_password") }
+					</label>
+					<input type="password" id="password_confirm" name="password_confirm" required
+						class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"/>
+				</div>
+				<button type="submit"
+					class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer">
+					{ i18n.T(ctx, "auth_register_submit") }
+				</button>
+			</form>
+			<p class="mt-4 text-center text-sm text-gray-600">
+				{ i18n.T(ctx, "auth_register_has_account") }
+				<a href="/auth/login" class="text-blue-600 hover:text-blue-500">{ i18n.T(ctx, "auth_register_login_link") }</a>
+			</p>
+		</div>
+	}
+}
+
+templ RegistrationSuccess() {
+	@layouts.AuthLayout(i18n.T(ctx, "auth_register_title")) {
+		<div class="bg-white rounded-lg shadow p-6 text-center">
+			<div class="text-green-500 mb-4">
+				<svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+				</svg>
+			</div>
+			<h1 class="text-2xl font-bold text-gray-900 mb-4">Registration Successful</h1>
+			<p class="text-gray-600 mb-6">Your account has been created. You can now log in.</p>
+			<a href="/auth/login" class="inline-block bg-blue-600 text-white py-2 px-6 rounded-md hover:bg-blue-700">
+				{ i18n.T(ctx, "auth_login_submit") }
+			</a>
+		</div>
+	}
+}
+
+templ RegistrationClosed() {
+	@layouts.AuthLayout(i18n.T(ctx, "auth_register_title")) {
+		<div class="bg-white rounded-lg shadow p-6 text-center">
+			<div class="text-yellow-500 mb-4">
+				<svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+				</svg>
+			</div>
+			<h1 class="text-2xl font-bold text-gray-900 mb-4">{ i18n.T(ctx, "error_registration_closed") }</h1>
+			<p class="text-gray-600 mb-6">Please contact an administrator if you need an account.</p>
+			<a href="/auth/login" class="inline-block bg-blue-600 text-white py-2 px-6 rounded-md hover:bg-blue-700">
+				{ i18n.T(ctx, "auth_login_submit") }
+			</a>
+		</div>
+	}
+}

@@ -1,0 +1,45 @@
+// Copyright 2025 Oliver Andrich
+// Licensed under the EUPL-1.2
+
+package layouts
+
+import "codeberg.org/oliverandrich/go-webapp-template/internal/i18n"
+
+templ Error404() {
+	@Layout(i18n.T(ctx, "error_not_found_title")) {
+		<div class="text-center py-12">
+			<h1 class="text-6xl font-bold text-gray-300 mb-4">404</h1>
+			<h2 class="text-xl font-semibold text-gray-900 mb-4">{ i18n.T(ctx, "error_not_found_title") }</h2>
+			<p class="text-gray-600 mb-6">{ i18n.T(ctx, "error_not_found_message") }</p>
+			<a href="/" class="inline-block bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700">
+				{ i18n.T(ctx, "home_title") }
+			</a>
+		</div>
+	}
+}
+
+templ Error403() {
+	@Layout(i18n.T(ctx, "error_forbidden_title")) {
+		<div class="text-center py-12">
+			<h1 class="text-6xl font-bold text-gray-300 mb-4">403</h1>
+			<h2 class="text-xl font-semibold text-gray-900 mb-4">{ i18n.T(ctx, "error_forbidden_title") }</h2>
+			<p class="text-gray-600 mb-6">{ i18n.T(ctx, "error_forbidden_message") }</p>
+			<a href="/" class="inline-block bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700">
+				{ i18n.T(ctx, "home_title") }
+			</a>
+		</div>
+	}
+}
+
+templ Error(code string, title string, message string) {
+	@Layout(title) {
+		<div class="text-center py-12">
+			<h1 class="text-6xl font-bold text-gray-300 mb-4">{ code }</h1>
+			<h2 class="text-xl font-semibold text-gray-900 mb-4">{ title }</h2>
+			<p class="text-gray-600 mb-6">{ message }</p>
+			<a href="/" class="inline-block bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700">
+				{ i18n.T(ctx, "home_title") }
+			</a>
+		</div>
+	}
+}

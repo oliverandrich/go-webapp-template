@@ -1,0 +1,39 @@
+# English translations
+
+# App
+app_name = "My App"
+
+# Auth
+auth_login_title = "Login"
+auth_login_email = "Email"
+auth_login_password = "Password"
+auth_login_remember = "Remember me"
+auth_login_submit = "Login"
+auth_login_no_account = "Don't have an account?"
+auth_login_register_link = "Register"
+
+auth_register_title = "Register"
+auth_register_email = "Email"
+auth_register_password = "Password"
+auth_register_confirm_password = "Confirm Password"
+auth_register_submit = "Register"
+auth_register_has_account = "Already have an account?"
+auth_register_login_link = "Login"
+
+auth_logout = "Logout"
+
+# Errors
+error_invalid_credentials = "Invalid email or password"
+error_email_taken = "This email is already registered"
+error_passwords_mismatch = "Passwords do not match"
+error_registration_closed = "Registration is currently closed"
+
+# Home
+home_welcome = "Welcome"
+home_title = "Home"
+
+# General
+error_not_found_title = "Page Not Found"
+error_not_found_message = "The page you are looking for does not exist."
+error_forbidden_title = "Access Denied"
+error_forbidden_message = "You don't have permission to access this page."
