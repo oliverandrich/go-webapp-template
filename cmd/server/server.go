@@ -18,6 +18,7 @@ import (
 	"codeberg.org/oliverandrich/go-webapp-template/internal/services/auth"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/services/session"
 	"github.com/go-chi/chi/v5"
+	"github.com/lmittmann/tint"
 	"github.com/urfave/cli/v3"
 )
 
@@ -35,13 +36,15 @@ func setupLogger(level, format string) *slog.Logger {
 		lvl = slog.LevelInfo
 	}
 
-	opts := &slog.HandlerOptions{Level: lvl}
-
 	var handler slog.Handler
 	if format == "json" {
-		handler = slog.NewJSONHandler(os.Stdout, opts)
+		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: lvl})
 	} else {
-		handler = slog.NewTextHandler(os.Stdout, opts)
+		// Use tint for colorful development logs
+		handler = tint.NewHandler(os.Stdout, &tint.Options{
+			Level:      lvl,
+			TimeFormat: time.Kitchen,
+		})
 	}
 
 	return slog.New(handler)
