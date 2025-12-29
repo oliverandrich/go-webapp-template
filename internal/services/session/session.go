@@ -22,8 +22,8 @@ const (
 
 // SessionUser represents the user data extracted from a valid session
 type SessionUser struct {
-	ID      int64
 	Email   string
+	ID      int64
 	IsAdmin bool
 }
 
@@ -51,7 +51,7 @@ func NewSessionManager(db *gorm.DB, sessionDuration time.Duration, rememberMeDur
 }
 
 // Login stores user data in the session
-func Login(sm *scs.SessionManager, ctx context.Context, userID int64, email string, isAdmin bool, rememberMe bool, rememberMeDuration time.Duration) error {
+func Login(ctx context.Context, sm *scs.SessionManager, userID int64, email string, isAdmin bool, rememberMe bool, rememberMeDuration time.Duration) error {
 	// Renew token to prevent session fixation
 	if err := sm.RenewToken(ctx); err != nil {
 		return err
@@ -71,12 +71,12 @@ func Login(sm *scs.SessionManager, ctx context.Context, userID int64, email stri
 }
 
 // Logout destroys the current session
-func Logout(sm *scs.SessionManager, ctx context.Context) error {
+func Logout(ctx context.Context, sm *scs.SessionManager) error {
 	return sm.Destroy(ctx)
 }
 
 // GetUser retrieves the authenticated user from the session
-func GetUser(sm *scs.SessionManager, ctx context.Context) *SessionUser {
+func GetUser(ctx context.Context, sm *scs.SessionManager) *SessionUser {
 	userID := sm.GetInt64(ctx, UserIDKey)
 	if userID == 0 {
 		return nil
@@ -90,11 +90,11 @@ func GetUser(sm *scs.SessionManager, ctx context.Context) *SessionUser {
 }
 
 // IsAuthenticated checks if a user is logged in
-func IsAuthenticated(sm *scs.SessionManager, ctx context.Context) bool {
+func IsAuthenticated(ctx context.Context, sm *scs.SessionManager) bool {
 	return sm.GetInt64(ctx, UserIDKey) != 0
 }
 
 // GetUserFromRequest is a convenience helper to get user from http.Request
 func GetUserFromRequest(sm *scs.SessionManager, r *http.Request) *SessionUser {
-	return GetUser(sm, r.Context())
+	return GetUser(r.Context(), sm)
 }

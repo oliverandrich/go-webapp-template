@@ -68,15 +68,19 @@ func runServer(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return fmt.Errorf("failed to get underlying sql.DB: %w", err)
 	}
-	defer sqlDB.Close()
+	defer func() {
+		if closeErr := sqlDB.Close(); closeErr != nil {
+			logger.Error("failed to close database", "error", closeErr)
+		}
+	}()
 
 	// Run migrations
-	if err := database.Migrate(db); err != nil {
+	if err = database.Migrate(db); err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 
 	// Initialize i18n
-	if err := i18n.Init(); err != nil {
+	if err = i18n.Init(); err != nil {
 		return fmt.Errorf("failed to initialize i18n: %w", err)
 	}
 
@@ -118,8 +122,16 @@ func runServer(ctx context.Context, cmd *cli.Command) error {
 		"log_level", cfg.Log.Level,
 	)
 
-	// Start HTTP server
+	// Start HTTP server with timeouts
 	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
 	logger.Info("server_start", "addr", addr)
-	return http.ListenAndServe(addr, r)
+
+	server := &http.Server{
+		Addr:         addr,
+		Handler:      r,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 60 * time.Second, // Longer for SSE connections
+		IdleTimeout:  120 * time.Second,
+	}
+	return server.ListenAndServe()
 }

@@ -35,7 +35,7 @@ func Open(dsn string) (*gorm.DB, error) {
 	// Ensure directory exists for file-based databases
 	if path != ":memory:" && !strings.HasPrefix(path, ":memory:") {
 		dir := filepath.Dir(path)
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := os.MkdirAll(dir, 0750); err != nil {
 			return nil, fmt.Errorf("failed to create database directory: %w", err)
 		}
 	}
@@ -70,7 +70,7 @@ func Open(dsn string) (*gorm.DB, error) {
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
-		sqlDB.Close()
+		_ = sqlDB.Close()
 		return nil, fmt.Errorf("failed to create GORM connection: %w", err)
 	}
 
@@ -86,7 +86,7 @@ func Open(dsn string) (*gorm.DB, error) {
 
 	for _, pragma := range pragmas {
 		if err := db.Exec(pragma).Error; err != nil {
-			sqlDB.Close()
+			_ = sqlDB.Close()
 			return nil, fmt.Errorf("failed to set pragma: %w", err)
 		}
 	}

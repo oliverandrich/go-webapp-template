@@ -22,7 +22,7 @@ func init() {
 	if err != nil {
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
@@ -90,8 +90,8 @@ func (e *PasswordValidationError) Messages() []string {
 
 // ValidationResult holds all validation errors
 type ValidationResult struct {
-	Valid  bool
 	Errors []ValidationError
+	Valid  bool
 }
 
 // Validate checks a password against all configured validators

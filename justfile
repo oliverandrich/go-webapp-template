@@ -20,6 +20,10 @@ setup:
     just htmx
     just templ
     just css
+    if command -v pre-commit &> /dev/null; then
+        pre-commit install
+        echo "Pre-commit hooks installed."
+    fi
     echo "Setup complete. Run 'just dev' to start development server."
 
 # Download HTMX and extensions
@@ -69,7 +73,8 @@ fmt:
 
 # Lint code
 lint:
-    go vet ./...
+    go mod tidy -diff
+    golangci-lint run
 
 # Run the server directly (without live reload)
 run:

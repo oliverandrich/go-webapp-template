@@ -62,7 +62,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	// Create session
 	rememberMeDuration := time.Duration(h.config.RememberMeDuration) * time.Hour
-	if err := session.Login(h.sessionManager, r.Context(), user.ID, user.Email, user.IsAdmin != 0, rememberMe, rememberMeDuration); err != nil {
+	if err := session.Login(r.Context(), h.sessionManager, user.ID, user.Email, user.IsAdmin != 0, rememberMe, rememberMeDuration); err != nil {
 		authtpl.Login(emailAddr, rememberMe, "An error occurred", next).Render(r.Context(), w)
 		return
 	}
@@ -154,6 +154,6 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 // Logout handles user logout
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	_ = session.Logout(h.sessionManager, r.Context())
+	_ = session.Logout(r.Context(), h.sessionManager)
 	htmx.Redirect(w, r, "/auth/login")
 }

@@ -145,7 +145,7 @@ func (s *Service) ChangePassword(ctx context.Context, userID int64, currentPassw
 	}
 
 	// Verify current password
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(currentPassword)); err != nil {
+	if err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(currentPassword)); err != nil {
 		return ErrInvalidCredentials
 	}
 

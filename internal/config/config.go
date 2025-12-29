@@ -23,9 +23,9 @@ const (
 
 type Config struct {
 	Server   ServerConfig
+	Log      LogConfig
 	Database DatabaseConfig
 	Auth     AuthConfig
-	Log      LogConfig
 }
 
 type LogConfig struct {
@@ -35,8 +35,8 @@ type LogConfig struct {
 
 type ServerConfig struct {
 	Host    string
-	Port    int
 	BaseURL string
+	Port    int
 }
 
 type DatabaseConfig struct {
@@ -46,10 +46,10 @@ type DatabaseConfig struct {
 type AuthConfig struct {
 	RegistrationMode   RegistrationMode
 	SessionSecret      string
-	SessionDuration    int    // Hours for normal sessions (default: 24)
-	RememberMeDuration int    // Hours for "remember me" sessions (default: 720 = 30 days)
-	CookieName         string // Session cookie name (default: "session")
-	CookieSecure       bool   // HTTPS only cookie
+	CookieName         string
+	SessionDuration    int
+	RememberMeDuration int
+	CookieSecure       bool
 }
 
 // NewFromCLI creates a Config from urfave/cli command flags

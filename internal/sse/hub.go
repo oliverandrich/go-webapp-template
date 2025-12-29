@@ -19,9 +19,9 @@ type client struct {
 // Multiple tabs/windows from the same session share the same session ID.
 // Multiple sessions can belong to the same user (different browsers).
 type Hub struct {
+	clients      map[string][]client
+	userSessions map[int64][]string
 	mu           sync.RWMutex
-	clients      map[string][]client // sessionID -> list of clients
-	userSessions map[int64][]string  // userID -> list of sessionIDs
 }
 
 // NewHub creates a new SSE hub.

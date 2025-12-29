@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/urfave/cli-altsrc/v3"
+	altsrc "github.com/urfave/cli-altsrc/v3"
 	"github.com/urfave/cli-altsrc/v3/toml"
 	"github.com/urfave/cli/v3"
 )

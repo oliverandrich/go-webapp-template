@@ -17,8 +17,8 @@ const UserContextKey contextKey = "user"
 
 // User represents the authenticated user stored in context
 type User struct {
-	ID      int64
 	Email   string
+	ID      int64
 	IsAdmin bool
 }
 

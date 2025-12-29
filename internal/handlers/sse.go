@@ -38,7 +38,7 @@ func (h *SSEHandler) Events(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user from session
-	user := session.GetUser(h.sessionManager, ctx)
+	user := session.GetUser(ctx, h.sessionManager)
 	if user == nil {
 		http.Error(w, "Not authenticated", http.StatusUnauthorized)
 		return
