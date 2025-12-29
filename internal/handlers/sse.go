@@ -5,6 +5,7 @@ package handlers
 
 import (
 	"net/http"
+	"time"
 
 	"codeberg.org/oliverandrich/go-webapp-template/internal/services/session"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/sse"
@@ -64,11 +65,20 @@ func (h *SSEHandler) Events(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(sse.FormatEvent("connected", "ok")))
 	flusher.Flush()
 
+	// Heartbeat ticker to keep connection alive through proxies
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
 	// Stream events until client disconnects
 	for {
 		select {
 		case <-ctx.Done():
 			return
+		case <-ticker.C:
+			if _, err := w.Write([]byte(sse.Heartbeat)); err != nil {
+				return // Client disconnected
+			}
+			flusher.Flush()
 		case msg, ok := <-ch:
 			if !ok {
 				return

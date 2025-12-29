@@ -37,3 +37,7 @@ func FormatOOBEvent(html string) string {
 func FormatNamedOOBEvent(eventName, html string) string {
 	return FormatEvent(eventName, html)
 }
+
+// Heartbeat is an SSE comment that keeps the connection alive.
+// Comments (lines starting with :) are ignored by SSE clients.
+const Heartbeat = ": heartbeat\n\n"
