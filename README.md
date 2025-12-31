@@ -1,6 +1,6 @@
 # Go Webapp Template
 
-A ready-to-use template for Go web applications. Create new projects with `gonew` and start building immediately.
+A ready-to-use template for Go web applications with authentication, sessions, and i18n.
 
 ## Stack
 
@@ -27,22 +27,33 @@ A ready-to-use template for Go web applications. Create new projects with `gonew
 
 ```bash
 # Create new project from template
-gonew github.com/oliverandrich/go-webapp-template your-module-path
-cd your-project-name
+gohatch -e templ oliverandrich/go-webapp-template github.com/you/your-app
 
-# Setup (updates module paths + installs dependencies)
+# Install dependencies
+cd your-app
 just setup
 
 # Start development server (with hot reload)
 just dev
 ```
 
+### Alternative: Using gonew
+
+```bash
+gonew github.com/oliverandrich/go-webapp-template github.com/you/your-app
+cd your-app
+# Manually update module paths in .templ files
+find . -name "*.templ" -exec sed -i '' "s|github.com/oliverandrich/go-webapp-template|github.com/you/your-app|g" {} \;
+just setup
+```
+
 ## Requirements
 
-- Go 1.23+
+- Go 1.24+
+- [gohatch](https://github.com/oliverandrich/gohatch) or [gonew](https://pkg.go.dev/golang.org/x/tools/cmd/gonew)
 - [just](https://github.com/casey/just) (command runner)
-- [air](https://github.com/air-verse/air) (hot reload, installed via `just setup`)
-- [templ](https://templ.guide) (installed via `just setup`)
+- [air](https://github.com/air-verse/air) (hot reload)
+- [templ](https://templ.guide)
 - Node.js (for Tailwind CSS)
 
 ## Configuration
