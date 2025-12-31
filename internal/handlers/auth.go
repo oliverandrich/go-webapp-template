@@ -11,11 +11,11 @@ import (
 
 	"github.com/alexedwards/scs/v2"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/config"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/htmx"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/services/auth"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/services/session"
-	authtpl "codeberg.org/oliverandrich/go-webapp-template/templates/auth"
+	"github.com/oliverandrich/go-webapp-template/internal/config"
+	"github.com/oliverandrich/go-webapp-template/internal/htmx"
+	"github.com/oliverandrich/go-webapp-template/internal/services/auth"
+	"github.com/oliverandrich/go-webapp-template/internal/services/session"
+	authtpl "github.com/oliverandrich/go-webapp-template/templates/auth"
 )
 
 type AuthHandler struct {

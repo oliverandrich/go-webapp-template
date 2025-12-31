@@ -1,7 +1,7 @@
 # Go Webapp Template - Task Runner
 
 # Template module path (updated by setup after gonew)
-template_module := "codeberg.org/oliverandrich/go-webapp-template"
+template_module := "github.com/oliverandrich/go-webapp-template"
 
 # Default: show available commands
 default:

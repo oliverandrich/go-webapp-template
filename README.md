@@ -27,7 +27,7 @@ A ready-to-use template for Go web applications. Create new projects with `gonew
 
 ```bash
 # Create new project from template
-gonew codeberg.org/oliverandrich/go-webapp-template your-module-path
+gonew github.com/oliverandrich/go-webapp-template your-module-path
 cd your-project-name
 
 # Setup (updates module paths + installs dependencies)

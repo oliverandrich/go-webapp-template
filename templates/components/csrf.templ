@@ -3,7 +3,7 @@
 
 package components
 
-import "codeberg.org/oliverandrich/go-webapp-template/internal/csrf"
+import "github.com/oliverandrich/go-webapp-template/internal/csrf"
 
 templ CSRFInput() {
 	<input type="hidden" name="csrf_token" value={ csrf.GetToken(ctx) }/>

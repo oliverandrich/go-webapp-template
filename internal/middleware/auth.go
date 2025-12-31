@@ -7,10 +7,10 @@ import (
 	"context"
 	"net/http"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/auth"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/htmx"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/services/session"
+	"github.com/oliverandrich/go-webapp-template/internal/auth"
+	"github.com/oliverandrich/go-webapp-template/internal/htmx"
+	"github.com/oliverandrich/go-webapp-template/internal/models"
+	"github.com/oliverandrich/go-webapp-template/internal/services/session"
 	"github.com/alexedwards/scs/v2"
 )
 

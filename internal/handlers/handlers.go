@@ -7,8 +7,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
-	"codeberg.org/oliverandrich/go-webapp-template/templates/home"
+	"github.com/oliverandrich/go-webapp-template/internal/repository"
+	"github.com/oliverandrich/go-webapp-template/templates/home"
 )
 
 type Handler struct {

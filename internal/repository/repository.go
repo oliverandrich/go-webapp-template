@@ -9,7 +9,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
+	"github.com/oliverandrich/go-webapp-template/internal/models"
 )
 
 // ErrNotFound is returned when a record is not found

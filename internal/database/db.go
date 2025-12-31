@@ -14,7 +14,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
+	"github.com/oliverandrich/go-webapp-template/internal/models"
 
 	_ "modernc.org/sqlite" // Pure-Go SQLite driver
 )

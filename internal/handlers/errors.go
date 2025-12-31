@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"codeberg.org/oliverandrich/go-webapp-template/templates/layouts"
+	"github.com/oliverandrich/go-webapp-template/templates/layouts"
 )
 
 // NotFound renders the 404 error page.
