@@ -161,9 +161,9 @@ For production, use a reverse proxy (nginx, Caddy) for TLS termination.
 
 ## CI/CD
 
-This template includes Woodpecker CI configuration:
+This template includes GitHub Actions configuration:
 
-- `.woodpecker/test.yml` - Runs on push/PR: generates templates, builds CSS, runs tests
+- `.github/workflows/test.yml` - Runs on push/PR: generates templates, builds CSS, runs tests
 
 ## License
 
