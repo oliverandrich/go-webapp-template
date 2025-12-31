@@ -1,0 +1,39 @@
+name: Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Tailwind CSS
+        run: npm install tailwindcss @tailwindcss/cli
+
+      - name: Install templ
+        run: go install github.com/a-h/templ/cmd/templ@latest
+
+      - name: Generate templ templates
+        run: templ generate
+
+      - name: Build CSS
+        run: npx @tailwindcss/cli -i static/css/input.css -o static/css/output.css --minify
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test
+        run: go test ./...
