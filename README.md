@@ -37,20 +37,10 @@ just setup
 just dev
 ```
 
-### Alternative: Using gonew
-
-```bash
-gonew codeberg.org/oliverandrich/go-webapp-template github.com/you/your-app
-cd your-app
-# Manually update module paths in .templ files
-find . -name "*.templ" -exec sed -i '' "s|codeberg.org/oliverandrich/go-webapp-template|github.com/you/your-app|g" {} \;
-just setup
-```
-
 ## Requirements
 
 - Go 1.24+
-- [gohatch](https://codeberg.org/oliverandrich/gohatch) or [gonew](https://pkg.go.dev/golang.org/x/tools/cmd/gonew)
+- [gohatch](https://codeberg.org/oliverandrich/gohatch)
 - [just](https://github.com/casey/just) (command runner)
 - [air](https://github.com/air-verse/air) (hot reload)
 - [templ](https://templ.guide)
