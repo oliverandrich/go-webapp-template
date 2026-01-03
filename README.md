@@ -27,7 +27,7 @@ A ready-to-use template for Go web applications with authentication, sessions, a
 
 ```bash
 # Create new project from template
-gohatch -e templ oliverandrich/go-webapp-template github.com/you/your-app
+gohatch -e templ codeberg.org/oliverandrich/go-webapp-template github.com/you/your-app
 
 # Install dependencies
 cd your-app
@@ -40,17 +40,17 @@ just dev
 ### Alternative: Using gonew
 
 ```bash
-gonew github.com/oliverandrich/go-webapp-template github.com/you/your-app
+gonew codeberg.org/oliverandrich/go-webapp-template github.com/you/your-app
 cd your-app
 # Manually update module paths in .templ files
-find . -name "*.templ" -exec sed -i '' "s|github.com/oliverandrich/go-webapp-template|github.com/you/your-app|g" {} \;
+find . -name "*.templ" -exec sed -i '' "s|codeberg.org/oliverandrich/go-webapp-template|github.com/you/your-app|g" {} \;
 just setup
 ```
 
 ## Requirements
 
 - Go 1.24+
-- [gohatch](https://github.com/oliverandrich/gohatch) or [gonew](https://pkg.go.dev/golang.org/x/tools/cmd/gonew)
+- [gohatch](https://codeberg.org/oliverandrich/gohatch) or [gonew](https://pkg.go.dev/golang.org/x/tools/cmd/gonew)
 - [just](https://github.com/casey/just) (command runner)
 - [air](https://github.com/air-verse/air) (hot reload)
 - [templ](https://templ.guide)
@@ -97,11 +97,11 @@ format = "text"                 # text | json
 
 ### Registration Modes
 
-| Mode | Description |
-|------|-------------|
-| `open` | Anyone can register (public apps) |
+| Mode       | Description                                         |
+| ---------- | --------------------------------------------------- |
+| `open`     | Anyone can register (public apps)                   |
 | `internal` | Registration without verification (LAN/family/team) |
-| `closed` | Only admin can create users |
+| `closed`   | Only admin can create users                         |
 
 ## Development
 
@@ -161,9 +161,9 @@ For production, use a reverse proxy (nginx, Caddy) for TLS termination.
 
 ## CI/CD
 
-This template includes GitHub Actions configuration:
+This template includes Woodpecker CI configuration:
 
-- `.github/workflows/test.yml` - Runs on push/PR: generates templates, builds CSS, runs tests
+- `.woodpecker/ci.yml` - Runs on push/PR: generates templates, builds CSS, runs tests
 
 ## License
 

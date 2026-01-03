@@ -10,9 +10,9 @@ import (
 	"log/slog"
 	"net/mail"
 
-	"github.com/oliverandrich/go-webapp-template/internal/config"
-	"github.com/oliverandrich/go-webapp-template/internal/models"
-	"github.com/oliverandrich/go-webapp-template/internal/repository"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/config"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
 	"golang.org/x/crypto/bcrypt"
 )
 

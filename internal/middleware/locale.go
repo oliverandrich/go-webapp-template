@@ -6,7 +6,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/oliverandrich/go-webapp-template/internal/i18n"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/i18n"
 )
 
 // Locale creates middleware that detects the user's preferred language

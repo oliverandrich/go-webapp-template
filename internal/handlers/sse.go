@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/oliverandrich/go-webapp-template/internal/services/session"
-	"github.com/oliverandrich/go-webapp-template/internal/sse"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/services/session"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/sse"
 	"github.com/alexedwards/scs/v2"
 )
 
