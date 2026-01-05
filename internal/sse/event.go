@@ -18,8 +18,7 @@ func FormatEvent(eventName, data string) string {
 	}
 
 	// Handle multiline data
-	lines := strings.Split(data, "\n")
-	for _, line := range lines {
+	for line := range strings.SplitSeq(data, "\n") {
 		sb.WriteString(fmt.Sprintf("data: %s\n", line))
 	}
 

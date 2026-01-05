@@ -53,6 +53,7 @@ func TestHub_MultipleSessionsPerUser(t *testing.T) {
 	hub.Unregister("session2", 1, ch2)
 }
 
+//nolint:dupl // Test functions intentionally have similar structure for clarity
 func TestHub_SendToSession(t *testing.T) {
 	hub := NewHub()
 
@@ -90,6 +91,7 @@ func TestHub_SendToSession(t *testing.T) {
 	hub.Unregister("session2", 2, ch3)
 }
 
+//nolint:dupl // Test functions intentionally have similar structure for clarity
 func TestHub_SendToUser(t *testing.T) {
 	hub := NewHub()
 
@@ -162,7 +164,7 @@ func TestHub_NonBlockingSend(t *testing.T) {
 	ch := hub.Register("session1", 1)
 
 	// Fill the channel buffer (size 10)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		hub.SendToSession("session1", "msg")
 	}
 
@@ -191,7 +193,7 @@ func TestHub_ConcurrentAccess(t *testing.T) {
 
 	// Concurrent registrations
 	channels := make([]chan string, numGoroutines)
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()
@@ -203,7 +205,7 @@ func TestHub_ConcurrentAccess(t *testing.T) {
 	assert.Equal(t, numGoroutines, hub.ClientCount())
 
 	// Concurrent sends
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -213,7 +215,7 @@ func TestHub_ConcurrentAccess(t *testing.T) {
 	wg.Wait()
 
 	// Concurrent unregistrations
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()

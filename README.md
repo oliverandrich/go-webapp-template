@@ -5,7 +5,7 @@ A ready-to-use template for Go web applications with authentication, sessions, a
 ## Stack
 
 - **Go** with **Chi v5** router
-- **GORM** with **modernc.org/sqlite** (pure Go, no CGO)
+- **GORM** with **mattn/go-sqlite3** (CGO)
 - **SCS** sessions with **gormstore**
 - **nosurf** CSRF protection
 - **go-i18n** internationalization (EN/DE)
@@ -40,6 +40,7 @@ just dev
 ## Requirements
 
 - Go 1.24+
+- C compiler (gcc or clang) for CGO
 - [gohatch](https://codeberg.org/oliverandrich/gohatch)
 - [just](https://github.com/casey/just) (command runner)
 - [air](https://github.com/air-verse/air) (hot reload)

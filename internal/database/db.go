@@ -16,7 +16,7 @@ import (
 
 	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
 
-	_ "modernc.org/sqlite" // Pure-Go SQLite driver
+	_ "github.com/mattn/go-sqlite3" // CGO SQLite driver
 )
 
 // Open opens a GORM database connection with optimized SQLite settings.
@@ -59,8 +59,8 @@ func Open(dsn string) (*gorm.DB, error) {
 		}
 	}
 
-	// Open sql.DB with modernc.org/sqlite driver
-	sqlDB, err := sql.Open("sqlite", dsn)
+	// Open sql.DB with mattn/go-sqlite3 driver
+	sqlDB, err := sql.Open("sqlite3", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
