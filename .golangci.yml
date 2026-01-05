@@ -2,12 +2,21 @@ version: "2"
 linters:
   enable:
     - bodyclose
+    - dupl
+    - errcheck
+    - errorlint
+    - exhaustive
+    - gocyclo
     - gosec
+    - govet
     - misspell
+    - modernize
     - nilerr
+    - noctx
     - prealloc
     - revive
     - sqlclosecheck
+    - testifylint
     - unparam
   settings:
     errcheck:
