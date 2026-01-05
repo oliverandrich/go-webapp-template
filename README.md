@@ -27,7 +27,7 @@ A ready-to-use template for Go web applications with authentication, sessions, a
 
 ```bash
 # Create new project from template
-gohatch -e templ codeberg.org/oliverandrich/go-webapp-template github.com/you/your-app
+gohatch -e templ codeberg.org/oliverandrich/go-webapp-template example.com/you/your-app
 
 # Install dependencies
 cd your-app
