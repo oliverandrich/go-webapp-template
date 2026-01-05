@@ -28,3 +28,7 @@ Thumbs.db
 
 # Build
 build-errors.log
+
+# Claude Code
+CLAUDE.md
+AGENTS.md
