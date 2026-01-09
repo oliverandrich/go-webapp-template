@@ -21,6 +21,7 @@ import (
 	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
 	"github.com/labstack/echo/v4"
+	"github.com/lmittmann/tint"
 	"github.com/urfave/cli/v3"
 )
 
@@ -131,13 +132,11 @@ func setupLogger(level, format string) {
 		logLevel = slog.LevelInfo
 	}
 
-	opts := &slog.HandlerOptions{Level: logLevel}
-
 	var handler slog.Handler
 	if format == "json" {
-		handler = slog.NewJSONHandler(os.Stdout, opts)
+		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel})
 	} else {
-		handler = slog.NewTextHandler(os.Stdout, opts)
+		handler = tint.NewHandler(os.Stdout, &tint.Options{Level: logLevel})
 	}
 
 	slog.SetDefault(slog.New(handler))
