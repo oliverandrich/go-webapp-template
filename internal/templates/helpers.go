@@ -8,6 +8,7 @@ import (
 
 	"codeberg.org/oliverandrich/go-webapp-template/internal/ctxkeys"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/i18n"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
 )
 
 // CSRFToken returns the CSRF token from the context.
@@ -47,4 +48,17 @@ func JSPath(ctx context.Context) string {
 		return path
 	}
 	return "/static/js/htmx.js"
+}
+
+// GetUser returns the authenticated user from context, or nil if not logged in.
+func GetUser(ctx context.Context) *models.User {
+	if user, ok := ctx.Value(ctxkeys.User{}).(*models.User); ok {
+		return user
+	}
+	return nil
+}
+
+// IsAuthenticated returns true if a user is logged in.
+func IsAuthenticated(ctx context.Context) bool {
+	return GetUser(ctx) != nil
 }

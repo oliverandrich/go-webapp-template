@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -22,6 +23,8 @@ import (
 	"codeberg.org/oliverandrich/go-webapp-template/internal/i18n"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/services/session"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/services/webauthn"
 	"github.com/labstack/echo/v4"
 	"github.com/urfave/cli/v3"
 )
@@ -61,6 +64,19 @@ func Run(ctx context.Context, cmd *cli.Command) error {
 	// Repository
 	repo := repository.New(db)
 
+	// Session Manager
+	secure := strings.HasPrefix(cfg.Server.BaseURL, "https://")
+	sessions, err := session.NewManager(&cfg.Session, secure)
+	if err != nil {
+		return fmt.Errorf("failed to create session manager: %w", err)
+	}
+
+	// WebAuthn Service
+	wa, err := webauthn.NewService(&cfg.WebAuthn)
+	if err != nil {
+		return fmt.Errorf("failed to create webauthn service: %w", err)
+	}
+
 	// Echo
 	e := echo.New()
 	e.HideBanner = true
@@ -75,22 +91,45 @@ func Run(ctx context.Context, cmd *cli.Command) error {
 	// Middleware
 	setupMiddleware(e, cfg, assets)
 
+	// Auth Middleware (after customContext, which sets up *Context)
+	e.Use(AuthMiddleware(sessions, repo))
+
 	// Routes
-	setupRoutes(e, repo)
+	setupRoutes(e, repo, wa, sessions)
 
 	// Start server
 	return startWithGracefulShutdown(e, cfg)
 }
 
-func setupRoutes(e *echo.Echo, repo *repository.Repository) {
+func setupRoutes(e *echo.Echo, repo *repository.Repository, wa *webauthn.Service, sessions *session.Manager) {
 	h := handlers.New(repo)
+	auth := handlers.NewAuth(repo, wa, sessions)
 
 	// Static files
 	e.Static("/static", "static")
 
-	// Routes
+	// Public routes
 	e.GET("/health", h.Health)
 	e.GET("/", h.Home)
+
+	// Protected routes
+	e.GET("/dashboard", h.Dashboard, RequireAuth())
+
+	// Auth routes
+	e.GET("/auth/register", auth.RegisterPage)
+	e.POST("/auth/register/begin", auth.RegisterBegin)
+	e.POST("/auth/register/finish", auth.RegisterFinish)
+	e.GET("/auth/login", auth.LoginPage)
+	e.POST("/auth/login/begin", auth.LoginBegin)
+	e.POST("/auth/login/finish", auth.LoginFinish)
+	e.POST("/auth/logout", auth.Logout)
+
+	// Protected auth routes
+	protected := e.Group("/auth", RequireAuth())
+	protected.GET("/credentials", auth.CredentialsPage)
+	protected.POST("/credentials/begin", auth.AddCredentialBegin)
+	protected.POST("/credentials/finish", auth.AddCredentialFinish)
+	protected.DELETE("/credentials/:id", auth.DeleteCredential)
 }
 
 func startWithGracefulShutdown(e *echo.Echo, cfg *config.Config) error {

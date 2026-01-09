@@ -19,6 +19,8 @@ type Config struct { //nolint:govet // fieldalignment not critical for config st
 	Log      LogConfig
 	Database DatabaseConfig
 	TLS      TLSConfig
+	WebAuthn WebAuthnConfig
+	Session  SessionConfig
 }
 
 type TLSConfig struct {
@@ -45,6 +47,19 @@ type DatabaseConfig struct {
 	DSN string
 }
 
+type WebAuthnConfig struct {
+	RPID          string // Relying Party ID (domain), e.g. "localhost"
+	RPOrigin      string // Relying Party Origin (full URL), e.g. "http://localhost:8080"
+	RPDisplayName string // Display name shown to users
+}
+
+type SessionConfig struct { //nolint:govet // fieldalignment not critical
+	CookieName string // Session cookie name
+	MaxAge     int    // Session max age in seconds
+	HashKey    string // 32-byte hex string for HMAC signing
+	BlockKey   string // 32-byte hex string for AES encryption (optional)
+}
+
 func NewFromCLI(cmd *cli.Command) *Config {
 	cfg := &Config{
 		Server: ServerConfig{
@@ -67,13 +82,43 @@ func NewFromCLI(cmd *cli.Command) *Config {
 			CertFile: cmd.String("tls-cert-file"),
 			KeyFile:  cmd.String("tls-key-file"),
 		},
+		WebAuthn: WebAuthnConfig{
+			RPID:          cmd.String("webauthn-rp-id"),
+			RPOrigin:      cmd.String("webauthn-rp-origin"),
+			RPDisplayName: cmd.String("webauthn-rp-display-name"),
+		},
+		Session: SessionConfig{
+			CookieName: cmd.String("session-cookie-name"),
+			MaxAge:     int(cmd.Int("session-max-age")),
+			HashKey:    cmd.String("session-hash-key"),
+			BlockKey:   cmd.String("session-block-key"),
+		},
 	}
 
 	if cfg.Server.BaseURL == "" {
 		cfg.Server.BaseURL = buildBaseURL(cfg)
 	}
 
+	// Apply WebAuthn defaults based on BaseURL
+	applyWebAuthnDefaults(cfg)
+
 	return cfg
+}
+
+// applyWebAuthnDefaults sets WebAuthn defaults based on the resolved BaseURL.
+func applyWebAuthnDefaults(cfg *Config) {
+	// Extract host from BaseURL for RPID
+	if cfg.WebAuthn.RPID == "" {
+		cfg.WebAuthn.RPID = cfg.Server.Host
+	}
+	// Use BaseURL as RPOrigin
+	if cfg.WebAuthn.RPOrigin == "" {
+		cfg.WebAuthn.RPOrigin = cfg.Server.BaseURL
+	}
+	// Default display name
+	if cfg.WebAuthn.RPDisplayName == "" {
+		cfg.WebAuthn.RPDisplayName = "Go Web App"
+	}
 }
 
 func buildBaseURL(cfg *Config) string {
@@ -191,6 +236,46 @@ func Flags() []cli.Flag {
 			Name:    "tls-key-file",
 			Usage:   "Path to TLS private key file (manual mode)",
 			Sources: cli.NewValueSourceChain(cli.EnvVar("TLS_KEY_FILE"), toml.TOML("tls.key_file", configFile)),
+		},
+		// WebAuthn flags
+		&cli.StringFlag{
+			Name:    "webauthn-rp-id",
+			Usage:   "WebAuthn Relying Party ID (domain, defaults to host)",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("WEBAUTHN_RP_ID"), toml.TOML("webauthn.rp_id", configFile)),
+		},
+		&cli.StringFlag{
+			Name:    "webauthn-rp-origin",
+			Usage:   "WebAuthn Relying Party Origin (full URL, defaults to base_url)",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("WEBAUTHN_RP_ORIGIN"), toml.TOML("webauthn.rp_origin", configFile)),
+		},
+		&cli.StringFlag{
+			Name:    "webauthn-rp-display-name",
+			Value:   "Go Web App",
+			Usage:   "WebAuthn Relying Party display name",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("WEBAUTHN_RP_DISPLAY_NAME"), toml.TOML("webauthn.rp_display_name", configFile)),
+		},
+		// Session flags
+		&cli.StringFlag{
+			Name:    "session-cookie-name",
+			Value:   "_session",
+			Usage:   "Session cookie name",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("SESSION_COOKIE_NAME"), toml.TOML("session.cookie_name", configFile)),
+		},
+		&cli.IntFlag{
+			Name:    "session-max-age",
+			Value:   604800, // 7 days in seconds
+			Usage:   "Session max age in seconds",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("SESSION_MAX_AGE"), toml.TOML("session.max_age", configFile)),
+		},
+		&cli.StringFlag{
+			Name:    "session-hash-key",
+			Usage:   "Session hash key (32-byte hex, auto-generated if empty in dev)",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("SESSION_HASH_KEY"), toml.TOML("session.hash_key", configFile)),
+		},
+		&cli.StringFlag{
+			Name:    "session-block-key",
+			Usage:   "Session block key for encryption (32-byte hex, optional)",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("SESSION_BLOCK_KEY"), toml.TOML("session.block_key", configFile)),
 		},
 	}
 }

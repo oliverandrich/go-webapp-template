@@ -1,0 +1,58 @@
+package templates
+
+templ Dashboard() {
+	@Layout(T(ctx, "dashboard_title")) {
+		<div class="min-h-screen">
+			<!-- Navigation -->
+			<nav class="bg-white border-b border-gray-200">
+				<div class="max-w-4xl mx-auto px-4">
+					<div class="flex items-center justify-between h-14">
+						<a href="/" class="font-bold text-xl text-gray-900">
+							{ T(ctx, "app_name") }
+						</a>
+						<div class="flex items-center gap-1">
+							<a href="/auth/credentials" class="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md">
+								{ T(ctx, "manage_passkeys") }
+							</a>
+							<form method="POST" action="/auth/logout" class="inline">
+								<input type="hidden" name="csrf_token" value={ CSRFToken(ctx) }/>
+								<button type="submit" class="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md">
+									{ T(ctx, "logout") }
+								</button>
+							</form>
+						</div>
+					</div>
+				</div>
+			</nav>
+
+			<!-- Dashboard Content -->
+			<main class="py-8 px-4">
+				<div class="max-w-2xl mx-auto">
+					<h1 class="text-2xl font-bold text-gray-900">
+						{ T(ctx, "dashboard_heading") }
+					</h1>
+					<p class="mt-1 text-gray-600">
+						{ T(ctx, "dashboard_welcome") }
+					</p>
+
+					<div class="mt-6 grid gap-4 sm:grid-cols-2">
+						<!-- User Info Card -->
+						<div class="p-4 bg-white rounded-md border border-gray-200">
+							<p class="text-sm text-gray-500 mb-1">Logged in as</p>
+							if user := GetUser(ctx); user != nil {
+								<p class="font-medium text-gray-900">{ user.DisplayName }</p>
+								<p class="text-sm text-gray-500">{ "@" + user.Username }</p>
+							}
+						</div>
+
+						<!-- Passkeys Card -->
+						<a href="/auth/credentials" class="p-4 bg-white rounded-md border border-gray-200 hover:border-gray-300 transition-colors">
+							<p class="text-sm text-gray-500 mb-1">Security</p>
+							<p class="font-medium text-gray-900">{ T(ctx, "manage_passkeys") } →</p>
+						</a>
+					</div>
+				</div>
+			</main>
+		</div>
+	}
+}

@@ -1,0 +1,159 @@
+package auth
+
+import "codeberg.org/oliverandrich/go-webapp-template/internal/templates"
+
+templ Register() {
+	@templates.Layout(templates.T(ctx, "register_title")) {
+		<main class="min-h-screen flex items-center justify-center px-4 py-12">
+			<div class="w-full max-w-sm">
+				<div class="text-center mb-6">
+					<h1 class="text-2xl font-bold text-gray-900">
+						{ templates.T(ctx, "register_heading") }
+					</h1>
+					<p class="mt-1 text-sm text-gray-600">
+						{ templates.T(ctx, "app_description") }
+					</p>
+				</div>
+
+				<div class="bg-white rounded-md border border-gray-200 p-6">
+					<form id="register-form" class="space-y-4">
+						<input type="hidden" name="csrf_token" value={ templates.CSRFToken(ctx) }/>
+
+						<div>
+							<label for="username" class="block text-sm font-medium text-gray-700 mb-1">
+								{ templates.T(ctx, "username") }
+							</label>
+							<input
+								type="text"
+								id="username"
+								name="username"
+								required
+								autocomplete="username"
+								class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+							/>
+						</div>
+
+						<div>
+							<label for="display_name" class="block text-sm font-medium text-gray-700 mb-1">
+								{ templates.T(ctx, "display_name") }
+								<span class="text-gray-400 font-normal">(optional)</span>
+							</label>
+							<input
+								type="text"
+								id="display_name"
+								name="display_name"
+								autocomplete="name"
+								class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+							/>
+						</div>
+
+						<button
+							type="submit"
+							class="w-full px-4 py-2.5 font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-md"
+						>
+							{ templates.T(ctx, "register_button") }
+						</button>
+					</form>
+
+					<div id="error-message" class="hidden mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm"></div>
+				</div>
+
+				<p class="mt-4 text-center text-sm text-gray-600">
+					{ templates.T(ctx, "have_account") }
+					<a href="/auth/login" class="text-gray-900 font-medium hover:underline">
+						{ templates.T(ctx, "login_link") }
+					</a>
+				</p>
+			</div>
+		</main>
+		@registerScript()
+	}
+}
+
+templ registerScript() {
+	<script>
+		document.getElementById('register-form').addEventListener('submit', async (e) => {
+			e.preventDefault();
+			const errorDiv = document.getElementById('error-message');
+			errorDiv.classList.add('hidden');
+
+			const username = document.getElementById('username').value;
+			const displayName = document.getElementById('display_name').value || username;
+			const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
+			try {
+				const beginResp = await fetch('/auth/register/begin', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'X-CSRF-Token': csrfToken
+					},
+					body: JSON.stringify({ username, display_name: displayName })
+				});
+
+				if (!beginResp.ok) {
+					const err = await beginResp.json();
+					throw new Error(err.error || 'Registration failed');
+				}
+
+				const { publicKey, user_id } = await beginResp.json();
+
+				publicKey.challenge = base64ToArrayBuffer(publicKey.challenge);
+				publicKey.user.id = base64ToArrayBuffer(publicKey.user.id);
+				if (publicKey.excludeCredentials) {
+					publicKey.excludeCredentials = publicKey.excludeCredentials.map(c => ({
+						...c,
+						id: base64ToArrayBuffer(c.id)
+					}));
+				}
+
+				const credential = await navigator.credentials.create({ publicKey });
+
+				const finishResp = await fetch('/auth/register/finish?user_id=' + user_id, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'X-CSRF-Token': csrfToken
+					},
+					body: JSON.stringify({
+						id: credential.id,
+						rawId: arrayBufferToBase64(credential.rawId),
+						type: credential.type,
+						response: {
+							clientDataJSON: arrayBufferToBase64(credential.response.clientDataJSON),
+							attestationObject: arrayBufferToBase64(credential.response.attestationObject)
+						}
+					})
+				});
+
+				if (!finishResp.ok) {
+					const err = await finishResp.json();
+					throw new Error(err.error || 'Registration failed');
+				}
+
+				window.location.href = '/dashboard';
+			} catch (err) {
+				errorDiv.textContent = err.message;
+				errorDiv.classList.remove('hidden');
+			}
+		});
+
+		function base64ToArrayBuffer(base64) {
+			const binary = atob(base64.replace(/-/g, '+').replace(/_/g, '/'));
+			const bytes = new Uint8Array(binary.length);
+			for (let i = 0; i < binary.length; i++) {
+				bytes[i] = binary.charCodeAt(i);
+			}
+			return bytes.buffer;
+		}
+
+		function arrayBufferToBase64(buffer) {
+			const bytes = new Uint8Array(buffer);
+			let binary = '';
+			for (let i = 0; i < bytes.byteLength; i++) {
+				binary += String.fromCharCode(bytes[i]);
+			}
+			return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+		}
+	</script>
+}

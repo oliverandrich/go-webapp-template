@@ -12,3 +12,6 @@ type CSSPath struct{}
 
 // JSPath is the context key for the JS (htmx) path.
 type JSPath struct{}
+
+// User is the context key for the authenticated user.
+type User struct{}

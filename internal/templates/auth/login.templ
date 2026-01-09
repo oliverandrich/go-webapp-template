@@ -1,0 +1,134 @@
+package auth
+
+import "codeberg.org/oliverandrich/go-webapp-template/internal/templates"
+
+templ Login() {
+	@templates.Layout(templates.T(ctx, "login_title")) {
+		<main class="min-h-screen flex items-center justify-center px-4 py-12">
+			<div class="w-full max-w-sm">
+				<div class="text-center mb-6">
+					<h1 class="text-2xl font-bold text-gray-900">
+						{ templates.T(ctx, "login_heading") }
+					</h1>
+				</div>
+
+				<div class="bg-white rounded-md border border-gray-200 p-6">
+					<form id="login-form" class="space-y-4">
+						<input type="hidden" name="csrf_token" value={ templates.CSRFToken(ctx) }/>
+
+						<p class="text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-md p-3">
+							{ templates.T(ctx, "login_hint") }
+						</p>
+
+						<button
+							type="submit"
+							class="w-full px-4 py-2.5 font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-md"
+						>
+							{ templates.T(ctx, "login_button") }
+						</button>
+					</form>
+
+					<div id="error-message" class="hidden mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm"></div>
+				</div>
+
+				<p class="mt-4 text-center text-sm text-gray-600">
+					{ templates.T(ctx, "no_account") }
+					<a href="/auth/register" class="text-gray-900 font-medium hover:underline">
+						{ templates.T(ctx, "register_link") }
+					</a>
+				</p>
+			</div>
+		</main>
+		@loginScript()
+	}
+}
+
+templ loginScript() {
+	<script>
+		document.getElementById('login-form').addEventListener('submit', async (e) => {
+			e.preventDefault();
+			const errorDiv = document.getElementById('error-message');
+			errorDiv.classList.add('hidden');
+
+			const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
+			try {
+				const beginResp = await fetch('/auth/login/begin', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'X-CSRF-Token': csrfToken
+					}
+				});
+
+				if (!beginResp.ok) {
+					const err = await beginResp.json();
+					throw new Error(err.error || 'Login failed');
+				}
+
+				const { publicKey, session_id } = await beginResp.json();
+
+				publicKey.challenge = base64ToArrayBuffer(publicKey.challenge);
+				if (publicKey.allowCredentials) {
+					publicKey.allowCredentials = publicKey.allowCredentials.map(c => ({
+						...c,
+						id: base64ToArrayBuffer(c.id)
+					}));
+				}
+
+				const credential = await navigator.credentials.get({ publicKey });
+
+				const finishResp = await fetch('/auth/login/finish?session_id=' + session_id, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'X-CSRF-Token': csrfToken
+					},
+					body: JSON.stringify({
+						id: credential.id,
+						rawId: arrayBufferToBase64(credential.rawId),
+						type: credential.type,
+						response: {
+							clientDataJSON: arrayBufferToBase64(credential.response.clientDataJSON),
+							authenticatorData: arrayBufferToBase64(credential.response.authenticatorData),
+							signature: arrayBufferToBase64(credential.response.signature),
+							userHandle: credential.response.userHandle ? arrayBufferToBase64(credential.response.userHandle) : null
+						}
+					})
+				});
+
+				if (!finishResp.ok) {
+					const err = await finishResp.json();
+					throw new Error(err.error || 'Login failed');
+				}
+
+				window.location.href = '/dashboard';
+			} catch (err) {
+				if (err.name === 'NotAllowedError') {
+					errorDiv.textContent = 'Authentication was cancelled or timed out.';
+				} else {
+					errorDiv.textContent = err.message;
+				}
+				errorDiv.classList.remove('hidden');
+			}
+		});
+
+		function base64ToArrayBuffer(base64) {
+			const binary = atob(base64.replace(/-/g, '+').replace(/_/g, '/'));
+			const bytes = new Uint8Array(binary.length);
+			for (let i = 0; i < binary.length; i++) {
+				bytes[i] = binary.charCodeAt(i);
+			}
+			return bytes.buffer;
+		}
+
+		function arrayBufferToBase64(buffer) {
+			const bytes = new Uint8Array(buffer);
+			let binary = '';
+			for (let i = 0; i < bytes.byteLength; i++) {
+				binary += String.fromCharCode(bytes[i]);
+			}
+			return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+		}
+	</script>
+}

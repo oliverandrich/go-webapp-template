@@ -32,3 +32,8 @@ func (h *Handlers) Health(c echo.Context) error {
 func (h *Handlers) Home(c echo.Context) error {
 	return Render(c, http.StatusOK, templates.Home())
 }
+
+// Dashboard renders the protected dashboard page.
+func (h *Handlers) Dashboard(c echo.Context) error {
+	return Render(c, http.StatusOK, templates.Dashboard())
+}

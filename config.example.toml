@@ -21,3 +21,16 @@ cert_dir = "./data/certs"  # Directory for auto-generated certificates
 email = ""                 # Email for ACME/Let's Encrypt (required for acme mode)
 cert_file = ""             # Path to certificate file (manual mode)
 key_file = ""              # Path to private key file (manual mode)
+
+# WebAuthn configuration
+[webauthn]
+rp_id = ""                 # Relying Party ID (domain), defaults to host
+rp_origin = ""             # Relying Party Origin (URL), defaults to base_url
+rp_display_name = "Go Web App"  # Display name shown to users
+
+# Session configuration
+[session]
+cookie_name = "_session"   # Session cookie name
+max_age = 604800           # Session max age in seconds (7 days)
+hash_key = ""              # 32-byte hex string for HMAC signing (auto-generated in dev)
+block_key = ""             # 32-byte hex string for AES encryption (optional)

@@ -13,6 +13,8 @@ import (
 	"codeberg.org/oliverandrich/go-webapp-template/internal/config"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/ctxkeys"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/i18n"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/services/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -137,4 +139,50 @@ func isHashedAsset(path string) bool {
 		}
 	}
 	return false
+}
+
+// AuthMiddleware loads the user from the session cookie and sets it in the context.
+func AuthMiddleware(sessions *session.Manager, repo *repository.Repository) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			cc, ok := c.(*Context)
+			if !ok {
+				return next(c)
+			}
+
+			// Parse session cookie
+			sessionData, err := sessions.Parse(c.Request())
+			if err != nil || sessionData == nil {
+				return next(c) // Not logged in, continue
+			}
+
+			// Load user from database
+			user, err := repo.GetUserByID(c.Request().Context(), sessionData.UserID)
+			if err != nil {
+				return next(c) // User not found, continue without auth
+			}
+
+			// Set user in Context struct
+			cc.User = user
+
+			// Also set in request context for templates
+			ctx := context.WithValue(c.Request().Context(), ctxkeys.User{}, user)
+			c.SetRequest(c.Request().WithContext(ctx))
+
+			return next(c)
+		}
+	}
+}
+
+// RequireAuth returns middleware that redirects to login if not authenticated.
+func RequireAuth() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			cc, ok := c.(*Context)
+			if !ok || !cc.IsAuthenticated() {
+				return c.Redirect(http.StatusSeeOther, "/auth/login")
+			}
+			return next(c)
+		}
+	}
 }

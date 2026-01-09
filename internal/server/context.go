@@ -8,14 +8,26 @@ import (
 
 	"codeberg.org/oliverandrich/go-webapp-template/internal/ctxkeys"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/htmx"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
 	"github.com/labstack/echo/v4"
 )
 
-// Context is a custom Echo context with typed fields for htmx and assets.
+// Context is a custom Echo context with typed fields for htmx, assets, and user.
 type Context struct {
 	echo.Context
 	Htmx   *htmx.Request
 	Assets *Assets
+	User   *models.User // nil if not authenticated
+}
+
+// GetUser returns the authenticated user, or nil if not authenticated.
+func (c *Context) GetUser() *models.User {
+	return c.User
+}
+
+// IsAuthenticated returns true if the user is authenticated.
+func (c *Context) IsAuthenticated() bool {
+	return c.User != nil
 }
 
 // customContext wraps the Echo context with our custom Context.

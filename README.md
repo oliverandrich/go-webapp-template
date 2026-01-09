@@ -31,6 +31,7 @@ just dev
 - **[urfave/cli](https://cli.urfave.org/)** - CLI with TOML configuration
 - **[slog](https://pkg.go.dev/log/slog)** - Structured logging
 - **Automatic TLS** - Let's Encrypt, self-signed, or manual certificates
+- **WebAuthn/Passkeys** - Passwordless authentication with usernameless login
 - CSRF protection with secure cookies
 - Content-hashed static assets with immutable caching
 - Custom Echo context with htmx request detection
@@ -118,6 +119,13 @@ Configuration via `config.toml` or environment variables:
 | tls.email            | TLS_EMAIL            |                       | Email for Let's Encrypt (required for acme) |
 | tls.cert_file        | TLS_CERT_FILE        |                       | Path to certificate (manual mode)      |
 | tls.key_file         | TLS_KEY_FILE         |                       | Path to private key (manual mode)      |
+| webauthn.rp_id       | WEBAUTHN_RP_ID       | (from host)           | WebAuthn Relying Party ID (domain)     |
+| webauthn.rp_origin   | WEBAUTHN_RP_ORIGIN   | (from base_url)       | WebAuthn Relying Party Origin          |
+| webauthn.rp_display_name | WEBAUTHN_RP_DISPLAY_NAME | Go Web App      | Display name for passkey prompts       |
+| session.cookie_name  | SESSION_COOKIE_NAME  | _session              | Session cookie name                    |
+| session.max_age      | SESSION_MAX_AGE      | 604800                | Session max age (seconds, 7 days)      |
+| session.hash_key     | SESSION_HASH_KEY     | (auto in dev)         | 32-byte hex HMAC key                   |
+| session.block_key    | SESSION_BLOCK_KEY    |                       | 32-byte hex AES key (optional)         |
 
 ## TLS Configuration
 
@@ -173,6 +181,46 @@ func (h *Handlers) Example(c echo.Context) error {
 ```
 
 Available fields: `IsHtmx`, `IsBoosted`, `CurrentURL`, `Target`, `Trigger`, `TriggerName`, `Prompt`, `IsHistoryRestore`
+
+## WebAuthn/Passkey Authentication
+
+Built-in passwordless authentication using WebAuthn/Passkeys:
+
+**Features:**
+- Usernameless login (browser shows available passkeys)
+- Multiple passkeys per user
+- Signed session cookies (no database session storage)
+- Passkey management page
+
+**Routes:**
+- `GET /auth/register` - Registration page (username required)
+- `GET /auth/login` - Login page (no username needed)
+- `GET /auth/credentials` - Manage passkeys (protected)
+- `POST /auth/logout` - Logout
+
+**Configuration:**
+```bash
+# Usually auto-detected from base_url, but can be overridden:
+WEBAUTHN_RP_ID=example.com
+WEBAUTHN_RP_ORIGIN=https://example.com
+WEBAUTHN_RP_DISPLAY_NAME="My App"
+
+# Session (auto-generated key in development):
+SESSION_COOKIE_NAME=_session
+SESSION_MAX_AGE=604800  # 7 days
+SESSION_HASH_KEY=<32-byte-hex>  # Generate with: openssl rand -hex 32
+```
+
+**Access user in handlers:**
+```go
+func (h *Handlers) Dashboard(c echo.Context) error {
+    user := auth.GetUser(c.Request().Context())
+    if user != nil {
+        // User is logged in
+    }
+    return Render(c, http.StatusOK, templates.Dashboard(user))
+}
+```
 
 ## License
 
