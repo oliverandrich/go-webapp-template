@@ -10,8 +10,9 @@ import (
 	"net/http"
 	"strings"
 
+	"codeberg.org/oliverandrich/go-webapp-template/internal/appcontext"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/config"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/ctxkeys"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/htmx"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/i18n"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/services/session"
@@ -19,7 +20,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-func setupMiddleware(e *echo.Echo, cfg *config.Config, assets *Assets) {
+func setupMiddleware(e *echo.Echo, cfg *config.Config, assets *appcontext.Assets) {
 	e.Use(middleware.Recover())
 	e.Use(middleware.RequestID())
 	e.Use(requestLogger())
@@ -52,7 +53,7 @@ func csrfToContext() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			if token, ok := c.Get("csrf").(string); ok {
-				ctx := context.WithValue(c.Request().Context(), ctxkeys.CSRFToken{}, token)
+				ctx := context.WithValue(c.Request().Context(), appcontext.CSRFToken{}, token)
 				c.SetRequest(c.Request().WithContext(ctx))
 			}
 			return next(c)
@@ -141,11 +142,33 @@ func isHashedAsset(path string) bool {
 	return false
 }
 
+// customContext wraps the Echo context with our custom Context.
+// It also populates request.Context with asset paths for template access.
+func customContext(assets *appcontext.Assets) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			// Add asset paths to request context (for templates)
+			ctx := c.Request().Context()
+			ctx = context.WithValue(ctx, appcontext.CSSPath{}, assets.CSSPath)
+			ctx = context.WithValue(ctx, appcontext.JSPath{}, assets.JSPath)
+			c.SetRequest(c.Request().WithContext(ctx))
+
+			// Wrap with custom context (for handlers)
+			cc := &appcontext.Context{
+				Context: c,
+				Htmx:    htmx.ParseRequest(c.Request()),
+				Assets:  assets,
+			}
+			return next(cc)
+		}
+	}
+}
+
 // AuthMiddleware loads the user from the session cookie and sets it in the context.
 func AuthMiddleware(sessions *session.Manager, repo *repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			cc, ok := c.(*Context)
+			cc, ok := c.(*appcontext.Context)
 			if !ok {
 				return next(c)
 			}
@@ -166,7 +189,7 @@ func AuthMiddleware(sessions *session.Manager, repo *repository.Repository) echo
 			cc.User = user
 
 			// Also set in request context for templates
-			ctx := context.WithValue(c.Request().Context(), ctxkeys.User{}, user)
+			ctx := context.WithValue(c.Request().Context(), appcontext.User{}, user)
 			c.SetRequest(c.Request().WithContext(ctx))
 
 			return next(c)
@@ -178,7 +201,7 @@ func AuthMiddleware(sessions *session.Manager, repo *repository.Repository) echo
 func RequireAuth() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			cc, ok := c.(*Context)
+			cc, ok := c.(*appcontext.Context)
 			if !ok || !cc.IsAuthenticated() {
 				return c.Redirect(http.StatusSeeOther, "/auth/login")
 			}

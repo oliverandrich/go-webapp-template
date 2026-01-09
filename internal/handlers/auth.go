@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/auth"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/appcontext"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/services/session"
@@ -238,10 +238,11 @@ func (h *AuthHandlers) Logout(c echo.Context) error {
 
 // CredentialsPage renders the credentials management page.
 func (h *AuthHandlers) CredentialsPage(c echo.Context) error {
-	user := auth.GetUser(c.Request().Context())
-	if user == nil {
+	cc, ok := c.(*appcontext.Context)
+	if !ok || !cc.IsAuthenticated() {
 		return c.Redirect(http.StatusSeeOther, "/auth/login")
 	}
+	user := cc.GetUser()
 
 	creds, err := h.repo.GetCredentialsByUserID(c.Request().Context(), user.ID)
 	if err != nil {
@@ -253,10 +254,11 @@ func (h *AuthHandlers) CredentialsPage(c echo.Context) error {
 
 // AddCredentialBegin starts the process of adding a new credential.
 func (h *AuthHandlers) AddCredentialBegin(c echo.Context) error {
-	user := auth.GetUser(c.Request().Context())
-	if user == nil {
+	cc, ok := c.(*appcontext.Context)
+	if !ok || !cc.IsAuthenticated() {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "not authenticated"})
 	}
+	user := cc.GetUser()
 
 	// Begin registration for existing user
 	options, sessionData, err := h.webauthn.WebAuthn().BeginRegistration(user)
@@ -273,10 +275,11 @@ func (h *AuthHandlers) AddCredentialBegin(c echo.Context) error {
 
 // AddCredentialFinish completes adding a new credential.
 func (h *AuthHandlers) AddCredentialFinish(c echo.Context) error {
-	user := auth.GetUser(c.Request().Context())
-	if user == nil {
+	cc, ok := c.(*appcontext.Context)
+	if !ok || !cc.IsAuthenticated() {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "not authenticated"})
 	}
+	user := cc.GetUser()
 
 	// Get session data
 	sessionData, err := h.webauthn.GetRegistrationSession(user.ID)
@@ -312,10 +315,11 @@ func (h *AuthHandlers) AddCredentialFinish(c echo.Context) error {
 
 // DeleteCredential removes a credential.
 func (h *AuthHandlers) DeleteCredential(c echo.Context) error {
-	user := auth.GetUser(c.Request().Context())
-	if user == nil {
+	cc, ok := c.(*appcontext.Context)
+	if !ok || !cc.IsAuthenticated() {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "not authenticated"})
 	}
+	user := cc.GetUser()
 
 	credID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {

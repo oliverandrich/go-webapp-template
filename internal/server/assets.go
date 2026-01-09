@@ -8,17 +8,13 @@ import (
 	"log/slog"
 	"path/filepath"
 	"strings"
+
+	"codeberg.org/oliverandrich/go-webapp-template/internal/appcontext"
 )
 
-// Assets holds paths to static assets.
-type Assets struct {
-	CSSPath string
-	JSPath  string
-}
-
 // findAssets scans the static directory for hashed asset files.
-func findAssets() (*Assets, error) {
-	assets := &Assets{}
+func findAssets() (*appcontext.Assets, error) {
+	assets := &appcontext.Assets{}
 
 	// Find CSS file with hash
 	cssMatches, err := filepath.Glob("static/css/styles.*.css")

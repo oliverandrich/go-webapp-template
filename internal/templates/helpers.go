@@ -6,14 +6,14 @@ package templates
 import (
 	"context"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/ctxkeys"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/appcontext"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/i18n"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
 )
 
 // CSRFToken returns the CSRF token from the context.
 func CSRFToken(ctx context.Context) string {
-	if token, ok := ctx.Value(ctxkeys.CSRFToken{}).(string); ok {
+	if token, ok := ctx.Value(appcontext.CSRFToken{}).(string); ok {
 		return token
 	}
 	return ""
@@ -36,7 +36,7 @@ func Locale(ctx context.Context) string {
 
 // CSSPath returns the path to the hashed CSS file.
 func CSSPath(ctx context.Context) string {
-	if path, ok := ctx.Value(ctxkeys.CSSPath{}).(string); ok {
+	if path, ok := ctx.Value(appcontext.CSSPath{}).(string); ok {
 		return path
 	}
 	return "/static/css/styles.css"
@@ -44,7 +44,7 @@ func CSSPath(ctx context.Context) string {
 
 // JSPath returns the path to the hashed htmx JS file.
 func JSPath(ctx context.Context) string {
-	if path, ok := ctx.Value(ctxkeys.JSPath{}).(string); ok {
+	if path, ok := ctx.Value(appcontext.JSPath{}).(string); ok {
 		return path
 	}
 	return "/static/js/htmx.js"
@@ -52,7 +52,7 @@ func JSPath(ctx context.Context) string {
 
 // GetUser returns the authenticated user from context, or nil if not logged in.
 func GetUser(ctx context.Context) *models.User {
-	if user, ok := ctx.Value(ctxkeys.User{}).(*models.User); ok {
+	if user, ok := ctx.Value(appcontext.User{}).(*models.User); ok {
 		return user
 	}
 	return nil
