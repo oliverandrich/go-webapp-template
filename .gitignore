@@ -22,6 +22,10 @@ Thumbs.db
 # Build
 build-errors.log
 
+# Test/Coverage
+*.out
+coverage.html
+
 # Generated templ files
 *_templ.go
 
