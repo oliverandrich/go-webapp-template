@@ -77,83 +77,19 @@ templ registerScript() {
 			const errorDiv = document.getElementById('error-message');
 			errorDiv.classList.add('hidden');
 
+			const csrf = document.querySelector('input[name="csrf_token"]').value;
 			const username = document.getElementById('username').value;
 			const displayName = document.getElementById('display_name').value || username;
-			const csrfToken = document.querySelector('input[name="csrf_token"]').value;
 
 			try {
-				const beginResp = await fetch('/auth/register/begin', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'X-CSRF-Token': csrfToken
-					},
-					body: JSON.stringify({ username, display_name: displayName })
-				});
-
-				if (!beginResp.ok) {
-					const err = await beginResp.json();
-					throw new Error(err.error || 'Registration failed');
-				}
-
-				const { publicKey, user_id } = await beginResp.json();
-
-				publicKey.challenge = base64ToArrayBuffer(publicKey.challenge);
-				publicKey.user.id = base64ToArrayBuffer(publicKey.user.id);
-				if (publicKey.excludeCredentials) {
-					publicKey.excludeCredentials = publicKey.excludeCredentials.map(c => ({
-						...c,
-						id: base64ToArrayBuffer(c.id)
-					}));
-				}
-
-				const credential = await navigator.credentials.create({ publicKey });
-
-				const finishResp = await fetch('/auth/register/finish?user_id=' + user_id, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'X-CSRF-Token': csrfToken
-					},
-					body: JSON.stringify({
-						id: credential.id,
-						rawId: arrayBufferToBase64(credential.rawId),
-						type: credential.type,
-						response: {
-							clientDataJSON: arrayBufferToBase64(credential.response.clientDataJSON),
-							attestationObject: arrayBufferToBase64(credential.response.attestationObject)
-						}
-					})
-				});
-
-				if (!finishResp.ok) {
-					const err = await finishResp.json();
-					throw new Error(err.error || 'Registration failed');
-				}
-
+				const { publicKey, user_id } = await WebAuthn.post('/auth/register/begin', csrf, { username, display_name: displayName });
+				const credential = await navigator.credentials.create({ publicKey: WebAuthn.prepareCreate(publicKey) });
+				await WebAuthn.post('/auth/register/finish?user_id=' + user_id, csrf, WebAuthn.formatCreateResponse(credential));
 				window.location.href = '/dashboard';
 			} catch (err) {
 				errorDiv.textContent = err.message;
 				errorDiv.classList.remove('hidden');
 			}
 		});
-
-		function base64ToArrayBuffer(base64) {
-			const binary = atob(base64.replace(/-/g, '+').replace(/_/g, '/'));
-			const bytes = new Uint8Array(binary.length);
-			for (let i = 0; i < binary.length; i++) {
-				bytes[i] = binary.charCodeAt(i);
-			}
-			return bytes.buffer;
-		}
-
-		function arrayBufferToBase64(buffer) {
-			const bytes = new Uint8Array(buffer);
-			let binary = '';
-			for (let i = 0; i < bytes.byteLength; i++) {
-				binary += String.fromCharCode(bytes[i]);
-			}
-			return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-		}
 	</script>
 }
