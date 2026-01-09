@@ -1,13 +1,11 @@
 // Copyright 2025 Oliver Andrich
 // Licensed under the EUPL-1.2
 
-// Package i18n provides internationalization support for the application.
 package i18n
 
 import (
 	"context"
 	"embed"
-	"fmt"
 
 	"github.com/BurntSushi/toml"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -17,64 +15,47 @@ import (
 //go:embed translations/*.toml
 var translationFS embed.FS
 
-// Supported languages
-var (
-	DefaultLanguage    = language.English
-	SupportedLanguages = []language.Tag{language.English, language.German}
-)
-
-// bundle holds all translations
 var bundle *i18n.Bundle
 
-// localeContextKey is the context key for the current locale
 type localeContextKey struct{}
-
-// localizer context key
 type localizerContextKey struct{}
 
-// Init initializes the i18n bundle with all translation files.
+// Init initializes the i18n bundle with embedded translations.
 func Init() error {
-	bundle = i18n.NewBundle(DefaultLanguage)
+	bundle = i18n.NewBundle(language.English)
 	bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
 
-	// Load English (default)
-	if _, err := bundle.LoadMessageFileFS(translationFS, "translations/active.en.toml"); err != nil {
-		return fmt.Errorf("failed to load English translations: %w", err)
+	files := []string{
+		"translations/active.en.toml",
+		"translations/active.de.toml",
 	}
 
-	// Load German
-	if _, err := bundle.LoadMessageFileFS(translationFS, "translations/active.de.toml"); err != nil {
-		return fmt.Errorf("failed to load German translations: %w", err)
+	for _, file := range files {
+		if _, err := bundle.LoadMessageFileFS(translationFS, file); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-// WithLocale returns a new context with the given locale set.
+// WithLocale adds the locale to the context.
 func WithLocale(ctx context.Context, lang language.Tag) context.Context {
-	localizer := i18n.NewLocalizer(bundle, lang.String())
-	ctx = context.WithValue(ctx, localeContextKey{}, lang.String())
-	ctx = context.WithValue(ctx, localizerContextKey{}, localizer)
-	return ctx
+	locale := lang.String()
+	ctx = context.WithValue(ctx, localeContextKey{}, locale)
+	localizer := i18n.NewLocalizer(bundle, locale)
+	return context.WithValue(ctx, localizerContextKey{}, localizer)
 }
 
-// GetLocale returns the locale string from the context (e.g., "en", "de").
+// GetLocale returns the current locale from context.
 func GetLocale(ctx context.Context) string {
 	if locale, ok := ctx.Value(localeContextKey{}).(string); ok {
 		return locale
 	}
-	return DefaultLanguage.String()
+	return "en"
 }
 
-// getLocalizer returns the localizer from context
-func getLocalizer(ctx context.Context) *i18n.Localizer {
-	if loc, ok := ctx.Value(localizerContextKey{}).(*i18n.Localizer); ok {
-		return loc
-	}
-	return i18n.NewLocalizer(bundle, DefaultLanguage.String())
-}
-
-// T translates a simple message by its ID.
+// T translates a message by ID.
 func T(ctx context.Context, messageID string) string {
 	localizer := getLocalizer(ctx)
 	msg, err := localizer.Localize(&i18n.LocalizeConfig{
@@ -99,15 +80,13 @@ func TData(ctx context.Context, messageID string, data map[string]any) string {
 	return msg
 }
 
-// TPlural translates a message with pluralization.
+// TPlural translates a message with plural support.
 func TPlural(ctx context.Context, messageID string, count int) string {
 	localizer := getLocalizer(ctx)
 	msg, err := localizer.Localize(&i18n.LocalizeConfig{
-		MessageID:   messageID,
-		PluralCount: count,
-		TemplateData: map[string]any{
-			"Count": count,
-		},
+		MessageID:    messageID,
+		PluralCount:  count,
+		TemplateData: map[string]any{"Count": count},
 	})
 	if err != nil {
 		return messageID
@@ -115,10 +94,19 @@ func TPlural(ctx context.Context, messageID string, count int) string {
 	return msg
 }
 
-// MatchLanguage finds the best matching language from Accept-Language header.
+// MatchLanguage matches the best language from Accept-Language header.
 func MatchLanguage(acceptLanguage string) language.Tag {
-	matcher := language.NewMatcher(SupportedLanguages)
-	userPrefs, _, _ := language.ParseAcceptLanguage(acceptLanguage)
-	tag, _, _ := matcher.Match(userPrefs...)
+	matcher := language.NewMatcher([]language.Tag{
+		language.English,
+		language.German,
+	})
+	tag, _ := language.MatchStrings(matcher, acceptLanguage)
 	return tag
+}
+
+func getLocalizer(ctx context.Context) *i18n.Localizer {
+	if localizer, ok := ctx.Value(localizerContextKey{}).(*i18n.Localizer); ok {
+		return localizer
+	}
+	return i18n.NewLocalizer(bundle, "en")
 }

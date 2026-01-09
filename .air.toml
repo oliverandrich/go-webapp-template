@@ -1,21 +1,18 @@
 # Air configuration for live reload
-# https://github.com/cosmtrek/air
+# https://github.com/air-verse/air
 
 root = "."
 tmp_dir = "tmp"
 
 [build]
-  bin = "./tmp/main"
-  cmd = "templ generate && go build -o ./tmp/main ./cmd/server"
+  cmd = "templ generate && rm -f static/css/styles.*.css && tailwindcss -i assets/css/input.css -o static/css/styles.dev.css && go build -o ./tmp/app ./cmd/app"
+  bin = "./tmp/app"
   delay = 1000
-  exclude_dir = ["assets", "tmp", "vendor", "node_modules", "data"]
-  exclude_file = []
-  exclude_regex = ["_test.go", ".*_templ.go"]
+  exclude_dir = ["tmp", "vendor", "data", "static"]
+  exclude_regex = ["_test.go", "_templ.go"]
   exclude_unchanged = false
   follow_symlink = false
-  full_bin = ""
-  include_dir = []
-  include_ext = ["go", "templ", "toml"]
+  include_ext = ["go", "toml", "templ", "css"]
   kill_delay = "0s"
   log = "build-errors.log"
   send_interrupt = false
@@ -32,4 +29,4 @@ tmp_dir = "tmp"
   time = false
 
 [misc]
-  clean_on_exit = false
+  clean_on_exit = true

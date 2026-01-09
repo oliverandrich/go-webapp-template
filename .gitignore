@@ -1,20 +1,13 @@
 # Binaries
 bin/
-/server
+/app
 tmp/
-
-# Generated files
-*_templ.go
-static/css/output.css
 
 # Data
 data/
 
 # Config (keep example)
 config.toml
-
-# Dependencies
-node_modules/
 
 # IDE
 .idea/
@@ -28,6 +21,12 @@ Thumbs.db
 
 # Build
 build-errors.log
+
+# Generated templ files
+*_templ.go
+
+# Generated CSS
+static/css/styles.*.css
 
 # Claude Code
 CLAUDE.md

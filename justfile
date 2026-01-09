@@ -1,73 +1,58 @@
-# Go Webapp Template - Task Runner
+# Go Webapp Template - Development Tasks
 
-# Default: show available commands
+# Default: list available recipes
 default:
     @just --list
 
-# Install dependencies and generate assets
-setup:
-    go mod download
-    just htmx
-    just templ
-    just css
-    command -v pre-commit &> /dev/null && pre-commit install || true
-    @echo "Setup complete. Run 'just dev' to start development server."
-
-# Download HTMX and extensions
-htmx:
-    curl -sL https://unpkg.com/htmx.org@2/dist/htmx.min.js -o static/js/htmx.min.js
-    curl -sL https://unpkg.com/htmx-ext-sse@2/sse.js -o static/js/htmx-sse.js
-    @echo "Downloaded htmx.min.js and htmx-sse.js (latest 2.x)"
-
-# Run development server with live reload
-dev:
-    air
-
-# Build for production
-build:
-    just templ
-    just css-prod
-    go build -ldflags="-s -w -X 'main.Version={{version}}' -X 'main.BuildTime={{build_time}}'" -trimpath -o bin/server ./cmd/server
-
-# Version from git (tag or short commit hash)
-version := `git describe --tags --always --dirty 2>/dev/null || echo "dev"`
-build_time := `date -u '+%Y-%m-%d %H:%M:%S UTC'`
-
-# Run tests
-test *ARGS:
-    go test ./... {{ARGS}}
-
-# Generate Templ templates
+# Generate templ files
 templ:
     templ generate
 
-# Build Tailwind CSS
+# Build CSS with Tailwind (hashed filename for cache busting)
 css:
-    tailwindcss -i static/css/input.css -o static/css/output.css
+    #!/usr/bin/env bash
+    rm -f static/css/styles.*.css
+    tailwindcss -i assets/css/input.css -o static/css/styles.css --minify
+    hash=$(md5sum static/css/styles.css | cut -c1-8)
+    mv static/css/styles.css "static/css/styles.${hash}.css"
 
-# Build Tailwind CSS in watch mode
-css-watch:
-    tailwindcss -i static/css/input.css -o static/css/output.css --watch
+# Build the app binary
+build: templ css
+    go build -o app ./cmd/app
 
-# Build minified Tailwind CSS for production
-css-prod:
-    tailwindcss -i static/css/input.css -o static/css/output.css --minify
+# Run the app
+run: build
+    ./app
+
+# Run with hot-reload (requires: go install github.com/air-verse/air@latest)
+dev:
+    air
+
+# Run all tests
+test:
+    go test -v ./...
+
+# Run tests with coverage
+test-cover:
+    go test -coverprofile=coverage.out ./...
+    go tool cover -html=coverage.out -o coverage.html
+
+# Run linter (requires: golangci-lint)
+lint:
+    golangci-lint run
 
 # Format code
 fmt:
     go fmt ./...
-    templ fmt .
-
-# Lint code
-lint:
-    go mod tidy -diff
-    golangci-lint run
-
-# Run the server directly (without live reload)
-run:
-    go run ./cmd/server
+    goimports -w .
 
 # Clean build artifacts
 clean:
-    rm -rf bin/
-    rm -f static/css/output.css
+    rm -f app
+    rm -f coverage.out coverage.html
+    rm -rf tmp/
+    rm -f static/css/styles.*.css
+
+# Tidy dependencies
+tidy:
+    go mod tidy

@@ -1,0 +1,10 @@
+package templates
+
+templ Home() {
+	@Layout(T(ctx, "app_name")) {
+		<main>
+			<h1>{ T(ctx, "welcome") }</h1>
+			<p>{ T(ctx, "app_description") }</p>
+		</main>
+	}
+}

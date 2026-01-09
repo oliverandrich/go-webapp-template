@@ -1,0 +1,8 @@
+# gohatch template configuration
+# https://codeberg.org/oliverandrich/gohatch
+
+version = 1
+
+# File extensions for module path and variable replacement
+# (in addition to .go files which are always processed)
+extensions = ["templ", "md"]

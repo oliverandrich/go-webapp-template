@@ -1,39 +1,11 @@
 # German translations
 
-# App
-app_name = "Meine App"
+app_name = "Go Webapp Template"
+app_description = "Ein minimales Go Webanwendungs-Template"
 
-# Auth
-auth_login_title = "Anmelden"
-auth_login_email = "E-Mail"
-auth_login_password = "Passwort"
-auth_login_remember = "Angemeldet bleiben"
-auth_login_submit = "Anmelden"
-auth_login_no_account = "Noch kein Konto?"
-auth_login_register_link = "Registrieren"
+welcome = "Willkommen"
+home = "Startseite"
 
-auth_register_title = "Registrieren"
-auth_register_email = "E-Mail"
-auth_register_password = "Passwort"
-auth_register_confirm_password = "Passwort bestätigen"
-auth_register_submit = "Registrieren"
-auth_register_has_account = "Bereits ein Konto?"
-auth_register_login_link = "Anmelden"
-
-auth_logout = "Abmelden"
-
-# Errors
-error_invalid_credentials = "Ungültige E-Mail oder Passwort"
-error_email_taken = "Diese E-Mail ist bereits registriert"
-error_passwords_mismatch = "Passwörter stimmen nicht überein"
-error_registration_closed = "Die Registrierung ist derzeit geschlossen"
-
-# Home
-home_welcome = "Willkommen"
-home_title = "Startseite"
-
-# General
-error_not_found_title = "Seite nicht gefunden"
-error_not_found_message = "Die gesuchte Seite existiert nicht."
-error_forbidden_title = "Zugriff verweigert"
-error_forbidden_message = "Sie haben keine Berechtigung für diese Seite."
+error_not_found = "Seite nicht gefunden"
+error_internal = "Interner Serverfehler"
+error_bad_request = "Fehlerhafte Anfrage"

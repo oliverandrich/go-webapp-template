@@ -1,161 +1,103 @@
 # Go Webapp Template
 
-A ready-to-use template for Go web applications with authentication, sessions, and i18n.
-
-## Stack
-
-- **Go** with **Chi v5** router
-- **GORM** with **mattn/go-sqlite3** (CGO)
-- **SCS** sessions with **gormstore**
-- **nosurf** CSRF protection
-- **go-i18n** internationalization (EN/DE)
-- **urfave/cli v3** with **altsrc** (TOML/ENV/CLI config)
-- **Templ** type-safe templates
-- **HTMX** frontend interactivity
-- **Tailwind CSS v4**
+A modern, minimal Go web application template using Echo, GORM, templ, and Tailwind CSS.
 
 ## Features
 
-- User authentication (login, register, logout)
-- Three registration modes: `open`, `internal`, `closed`
-- Session management with "remember me"
-- Password validation (length, common passwords, similarity check)
-- i18n support (English, German)
-- HTMX-ready with CSRF protection
-
-## Quick Start
-
-```bash
-# Create new project from template
-gohatch -e templ codeberg.org/oliverandrich/go-webapp-template example.com/you/your-app
-
-# Install dependencies
-cd your-app
-just setup
-
-# Start development server (with hot reload)
-just dev
-```
-
-## Requirements
-
-- Go 1.24+
-- C compiler (gcc or clang) for CGO
-- [gohatch](https://codeberg.org/oliverandrich/gohatch)
-- [just](https://github.com/casey/just) (command runner)
-- [air](https://github.com/air-verse/air) (hot reload)
-- [templ](https://templ.guide)
-- Node.js (for Tailwind CSS)
-
-## Configuration
-
-Configuration priority: CLI flags > Environment variables > TOML file
-
-```bash
-# Use config file
-./bin/server --config config.toml
-
-# Or environment variables
-export PORT=3000
-export DATABASE=./data/myapp.db
-./bin/server
-
-# Or CLI flags
-./bin/server --port 3000 --database ./data/myapp.db
-```
-
-### config.toml
-
-```toml
-[server]
-host = "localhost"
-port = 8080
-
-[database]
-path = "./data/app.db"
-
-[auth]
-registration_mode = "internal"  # open | internal | closed
-session_duration = 24           # hours
-remember_me_duration = 720      # hours (30 days)
-cookie_name = "session"
-cookie_secure = false           # true for HTTPS
-
-[log]
-level = "info"                  # debug | info | warn | error
-format = "text"                 # text | json
-```
-
-### Registration Modes
-
-| Mode       | Description                                         |
-| ---------- | --------------------------------------------------- |
-| `open`     | Anyone can register (public apps)                   |
-| `internal` | Registration without verification (LAN/family/team) |
-| `closed`   | Only admin can create users                         |
-
-## Development
-
-```bash
-just setup    # Update module paths + install dependencies (run once)
-just dev      # Start dev server with hot reload
-just build    # Build production binary
-just test     # Run tests
-just templ    # Generate templ files
-just css      # Build Tailwind CSS
-```
+- **[Echo](https://echo.labstack.com/)** - High performance web framework
+- **[GORM](https://gorm.io/)** + SQLite - Database ORM with SQLite backend
+- **[templ](https://templ.guide/)** - Type-safe HTML templating
+- **[Tailwind CSS](https://tailwindcss.com/)** v4 - Utility-first CSS (standalone CLI, no Node.js)
+- **[go-i18n](https://github.com/nicksnyder/go-i18n)** - Internationalization support
+- **[urfave/cli](https://cli.urfave.org/)** - CLI with TOML configuration
+- **[slog](https://pkg.go.dev/log/slog)** - Structured logging
+- CSRF protection with secure cookies
+- Content-hashed static assets with immutable caching
 
 ## Project Structure
 
 ```
-├── cmd/server/          # Application entry point
-│   ├── main.go          # CLI setup
-│   ├── server.go        # Server initialization
-│   └── routes.go        # Router & middleware
+├── cmd/app/              # Application entrypoint
 ├── internal/
-│   ├── config/          # Configuration
-│   ├── database/        # GORM + SQLite setup
-│   ├── models/          # Database models
-│   ├── repository/      # Data access layer
-│   ├── services/
-│   │   ├── auth/        # Authentication logic
-│   │   └── session/     # Session management
-│   ├── handlers/        # HTTP handlers
-│   ├── middleware/      # HTTP middleware
-│   ├── i18n/            # Internationalization
-│   ├── csrf/            # CSRF protection
-│   └── htmx/            # HTMX helpers
-├── templates/           # Templ templates
-│   ├── layouts/         # Page layouts
-│   ├── components/      # Reusable components
-│   ├── auth/            # Auth pages
-│   └── home/            # Home page
-├── static/              # Static assets
-│   ├── css/             # Tailwind CSS
-│   └── js/              # HTMX
-└── data/                # SQLite database (gitignored)
+│   ├── config/           # Configuration handling
+│   ├── database/         # Database connection and migrations
+│   ├── handlers/         # HTTP handlers
+│   ├── i18n/             # Internationalization
+│   ├── models/           # GORM models
+│   ├── repository/       # Data access layer
+│   ├── server/           # Server setup, middleware, routing
+│   └── templates/        # templ templates and helpers
+├── assets/
+│   └── css/input.css     # Tailwind CSS input
+├── static/               # Generated static files (gitignored)
+├── locales/              # Translation files
+├── config.example.toml   # Example configuration
+└── justfile              # Development tasks
 ```
 
-## Deployment
+## Prerequisites
 
-### Binary
+- Go 1.25+
+- [templ](https://templ.guide/quick-start/installation) - `go install github.com/a-h/templ/cmd/templ@latest`
+- [Tailwind CSS CLI](https://tailwindcss.com/blog/standalone-cli) - via Homebrew: `brew install tailwindcss`
+- [Air](https://github.com/air-verse/air) (optional, for hot-reload) - `go install github.com/air-verse/air@latest`
+- [just](https://github.com/casey/just) (optional, task runner) - `brew install just`
+
+## Getting Started
+
+1. Clone and configure:
+   ```bash
+   cp config.example.toml config.toml
+   ```
+
+2. Build and run:
+   ```bash
+   just build
+   ./app
+   ```
+
+3. Or use hot-reload for development:
+   ```bash
+   just dev
+   ```
+
+4. Open http://localhost:8080
+
+## Development Commands
 
 ```bash
-# Build
-just build
-
-# Run (uses ./data/app.db by default)
-./bin/server --cookie-secure=true
+just          # List all available commands
+just build    # Generate templ + CSS, build binary
+just run      # Build and run
+just dev      # Hot-reload with Air
+just test     # Run tests
+just lint     # Run linter
+just fmt      # Format code
+just clean    # Clean build artifacts
+just tidy     # Tidy Go modules
 ```
 
-For production, use a reverse proxy (nginx, Caddy) for TLS termination.
+## Configuration
 
-## CI/CD
+Configuration via `config.toml` or environment variables:
 
-This template includes Woodpecker CI configuration:
+| Setting              | Env Variable         | Default               | Description                       |
+| -------------------- | -------------------- | --------------------- | --------------------------------- |
+| server.host          | SERVER_HOST          | localhost             | Bind address                      |
+| server.port          | SERVER_PORT          | 8080                  | Port number                       |
+| server.base_url      | SERVER_BASE_URL      | http://localhost:8080 | Public URL                        |
+| server.max_body_size | SERVER_MAX_BODY_SIZE | 1                     | Max body size (MB)                |
+| log.level            | LOG_LEVEL            | info                  | Log level (debug/info/warn/error) |
+| log.format           | LOG_FORMAT           | text                  | Log format (text/json)            |
+| database.dsn         | DATABASE_DSN         | ./data/app.db         | SQLite path                       |
 
-- `.woodpecker/ci.yml` - Runs on push/PR: generates templates, builds CSS, runs tests
+## Static Assets
+
+CSS is built with Tailwind CSS and served with content-hash filenames for optimal caching:
+
+- **Production** (`just build`): `styles.abc123.css` with immutable cache headers
+- **Development** (`just dev`): `styles.dev.css` with no-cache headers
 
 ## License
 
-EUPL-1.2 - see [LICENSE](LICENSE)
+[EUPL-1.2](LICENSE)

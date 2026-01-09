@@ -4,26 +4,31 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
-	"codeberg.org/oliverandrich/go-webapp-template/templates/home"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/templates"
+	"github.com/labstack/echo/v4"
 )
 
-type Handler struct {
+// Handlers contains all HTTP handlers.
+type Handlers struct {
 	repo *repository.Repository
 }
 
-func New(repo *repository.Repository) *Handler {
-	return &Handler{repo: repo}
+// New creates a new Handlers instance.
+func New(repo *repository.Repository) *Handlers {
+	return &Handlers{repo: repo}
 }
 
-func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
-	home.Index().Render(r.Context(), w)
+// Health returns the health status.
+func (h *Handlers) Health(c echo.Context) error {
+	return c.JSON(http.StatusOK, map[string]string{
+		"status": "ok",
+	})
 }
 
-func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+// Home renders the home page.
+func (h *Handlers) Home(c echo.Context) error {
+	return Render(c, http.StatusOK, templates.Home())
 }

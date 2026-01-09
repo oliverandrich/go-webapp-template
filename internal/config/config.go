@@ -6,26 +6,24 @@ package config
 import (
 	"fmt"
 
+	altsrc "github.com/urfave/cli-altsrc/v3"
+	"github.com/urfave/cli-altsrc/v3/toml"
 	"github.com/urfave/cli/v3"
 )
 
-// RegistrationMode defines how user registration works
-type RegistrationMode string
+var configFile = altsrc.StringSourcer("config.toml")
 
-const (
-	// RegistrationInternal allows registration without email verification (LAN/family use)
-	RegistrationInternal RegistrationMode = "internal"
-	// RegistrationOpen allows open registration (public internet)
-	RegistrationOpen RegistrationMode = "open"
-	// RegistrationClosed disables self-registration, only admin can create users
-	RegistrationClosed RegistrationMode = "closed"
-)
-
-type Config struct {
+type Config struct { //nolint:govet // fieldalignment not critical for config structs
 	Server   ServerConfig
 	Log      LogConfig
 	Database DatabaseConfig
-	Auth     AuthConfig
+}
+
+type ServerConfig struct { //nolint:govet // fieldalignment not critical for config structs
+	Host        string
+	Port        int
+	BaseURL     string
+	MaxBodySize int // in MB
 }
 
 type LogConfig struct {
@@ -33,59 +31,76 @@ type LogConfig struct {
 	Format string // text, json
 }
 
-type ServerConfig struct {
-	Host    string
-	BaseURL string
-	Port    int
-}
-
 type DatabaseConfig struct {
-	DSN string // SQLite DSN (file path or :memory:)
+	DSN string
 }
 
-type AuthConfig struct {
-	RegistrationMode   RegistrationMode
-	SessionSecret      string
-	CookieName         string
-	SessionDuration    int
-	RememberMeDuration int
-	CookieSecure       bool
-}
-
-// NewFromCLI creates a Config from urfave/cli command flags
 func NewFromCLI(cmd *cli.Command) *Config {
 	cfg := &Config{
 		Server: ServerConfig{
-			Host:    cmd.String("host"),
-			Port:    int(cmd.Int("port")),
-			BaseURL: cmd.String("base-url"),
-		},
-		Auth: AuthConfig{
-			RegistrationMode:   RegistrationMode(cmd.String("registration-mode")),
-			SessionSecret:      cmd.String("session-secret"),
-			SessionDuration:    int(cmd.Int("session-duration")),
-			RememberMeDuration: int(cmd.Int("remember-me-duration")),
-			CookieName:         cmd.String("cookie-name"),
-			CookieSecure:       cmd.Bool("cookie-secure"),
+			Host:        cmd.String("host"),
+			Port:        int(cmd.Int("port")),
+			BaseURL:     cmd.String("base-url"),
+			MaxBodySize: int(cmd.Int("max-body-size")),
 		},
 		Log: LogConfig{
 			Level:  cmd.String("log-level"),
 			Format: cmd.String("log-format"),
 		},
+		Database: DatabaseConfig{
+			DSN: cmd.String("database-dsn"),
+		},
 	}
 
-	// BaseURL: auto-generate if not set
 	if cfg.Server.BaseURL == "" {
 		cfg.Server.BaseURL = fmt.Sprintf("http://%s:%d", cfg.Server.Host, cfg.Server.Port)
 	}
 
-	// Database path
-	cfg.Database.DSN = cmd.String("database")
-
 	return cfg
 }
 
-// IsRegistrationEnabled returns true if users can self-register
-func (c *AuthConfig) IsRegistrationEnabled() bool {
-	return c.RegistrationMode != RegistrationClosed
+func Flags() []cli.Flag {
+	return []cli.Flag{
+		&cli.StringFlag{
+			Name:    "host",
+			Value:   "localhost",
+			Usage:   "Host to bind to",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("HOST"), toml.TOML("server.host", configFile)),
+		},
+		&cli.IntFlag{
+			Name:    "port",
+			Value:   8080,
+			Usage:   "Port to listen on",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("PORT"), toml.TOML("server.port", configFile)),
+		},
+		&cli.StringFlag{
+			Name:    "base-url",
+			Usage:   "Base URL for the application",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("BASE_URL"), toml.TOML("server.base_url", configFile)),
+		},
+		&cli.IntFlag{
+			Name:    "max-body-size",
+			Value:   1,
+			Usage:   "Maximum request body size in MB",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("MAX_BODY_SIZE"), toml.TOML("server.max_body_size", configFile)),
+		},
+		&cli.StringFlag{
+			Name:    "log-level",
+			Value:   "info",
+			Usage:   "Log level (debug, info, warn, error)",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("LOG_LEVEL"), toml.TOML("log.level", configFile)),
+		},
+		&cli.StringFlag{
+			Name:    "log-format",
+			Value:   "text",
+			Usage:   "Log format (text, json)",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("LOG_FORMAT"), toml.TOML("log.format", configFile)),
+		},
+		&cli.StringFlag{
+			Name:    "database-dsn",
+			Value:   "./data/app.db",
+			Usage:   "Database DSN",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("DATABASE_DSN"), toml.TOML("database.dsn", configFile)),
+		},
+	}
 }

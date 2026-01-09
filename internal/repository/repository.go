@@ -5,114 +5,56 @@ package repository
 
 import (
 	"context"
-	"errors"
-
-	"gorm.io/gorm"
 
 	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
+	"gorm.io/gorm"
 )
 
-// ErrNotFound is returned when a record is not found
-var ErrNotFound = errors.New("record not found")
-
-// Repository wraps GORM for database operations
+// Repository provides data access methods.
 type Repository struct {
 	db *gorm.DB
 }
 
-// New creates a new Repository instance
+// New creates a new Repository.
 func New(db *gorm.DB) *Repository {
 	return &Repository{db: db}
 }
 
-// DB returns the underlying GORM DB for direct access
+// DB returns the underlying database connection.
 func (r *Repository) DB() *gorm.DB {
 	return r.db
 }
 
-// wrapError converts GORM errors to repository errors
-func wrapError(err error) error {
-	if err == nil {
-		return nil
-	}
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return ErrNotFound
-	}
-	return err
-}
+// Example methods - replace with your own
 
-// ===== User Methods =====
-
-// GetUserByID retrieves a user by their ID
-func (r *Repository) GetUserByID(ctx context.Context, id int64) (*models.User, error) {
-	var user models.User
-	if err := r.db.WithContext(ctx).First(&user, id).Error; err != nil {
-		return nil, wrapError(err)
-	}
-	return &user, nil
-}
-
-// GetUserByEmail retrieves a user by their email address
-func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
-	var user models.User
-	if err := r.db.WithContext(ctx).Where("email = ?", email).First(&user).Error; err != nil {
-		return nil, wrapError(err)
-	}
-	return &user, nil
-}
-
-// CreateUser creates a new user in the database
-func (r *Repository) CreateUser(ctx context.Context, user *models.User) error {
-	return r.db.WithContext(ctx).Create(user).Error
-}
-
-// UpdateUser updates an existing user in the database
-func (r *Repository) UpdateUser(ctx context.Context, user *models.User) error {
-	return r.db.WithContext(ctx).Save(user).Error
-}
-
-// DeleteUser deletes a user by their ID
-func (r *Repository) DeleteUser(ctx context.Context, id int64) error {
-	return r.db.WithContext(ctx).Delete(&models.User{}, id).Error
-}
-
-// ListUsers returns all users ordered by creation date (newest first)
-func (r *Repository) ListUsers(ctx context.Context) ([]models.User, error) {
-	var users []models.User
-	if err := r.db.WithContext(ctx).Order("created_at DESC").Find(&users).Error; err != nil {
+// CreateExample creates a new example record.
+func (r *Repository) CreateExample(ctx context.Context, name string) (*models.Example, error) {
+	example := &models.Example{Name: name}
+	if err := r.db.WithContext(ctx).Create(example).Error; err != nil {
 		return nil, err
 	}
-	return users, nil
+	return example, nil
 }
 
-// CountUsers returns the total number of users
-func (r *Repository) CountUsers(ctx context.Context) (int64, error) {
-	var count int64
-	if err := r.db.WithContext(ctx).Model(&models.User{}).Count(&count).Error; err != nil {
-		return 0, err
+// GetExample retrieves an example by ID.
+func (r *Repository) GetExample(ctx context.Context, id int64) (*models.Example, error) {
+	var example models.Example
+	if err := r.db.WithContext(ctx).First(&example, id).Error; err != nil {
+		return nil, err
 	}
-	return count, nil
+	return &example, nil
 }
 
-// CountAdmins returns the number of admin users
-func (r *Repository) CountAdmins(ctx context.Context) (int64, error) {
-	var count int64
-	if err := r.db.WithContext(ctx).Model(&models.User{}).Where("is_admin = 1").Count(&count).Error; err != nil {
-		return 0, err
+// ListExamples returns all examples.
+func (r *Repository) ListExamples(ctx context.Context) ([]models.Example, error) {
+	var examples []models.Example
+	if err := r.db.WithContext(ctx).Find(&examples).Error; err != nil {
+		return nil, err
 	}
-	return count, nil
+	return examples, nil
 }
 
-// UpdateUserPassword updates a user's password
-func (r *Repository) UpdateUserPassword(ctx context.Context, id int64, passwordHash string) error {
-	return r.db.WithContext(ctx).Model(&models.User{}).Where("id = ?", id).Update("password_hash", passwordHash).Error
-}
-
-// SetUserAdmin sets or removes admin status for a user
-func (r *Repository) SetUserAdmin(ctx context.Context, id int64, isAdmin bool) error {
-	val := int64(0)
-	if isAdmin {
-		val = 1
-	}
-	return r.db.WithContext(ctx).Model(&models.User{}).Where("id = ?", id).Update("is_admin", val).Error
+// DeleteExample deletes an example by ID.
+func (r *Repository) DeleteExample(ctx context.Context, id int64) error {
+	return r.db.WithContext(ctx).Delete(&models.Example{}, id).Error
 }
