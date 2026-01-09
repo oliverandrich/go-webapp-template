@@ -5,9 +5,11 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -21,7 +23,6 @@ import (
 	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
 	"github.com/labstack/echo/v4"
-	"github.com/lmittmann/tint"
 	"github.com/urfave/cli/v3"
 )
 
@@ -93,51 +94,102 @@ func setupRoutes(e *echo.Echo, repo *repository.Repository) {
 }
 
 func startWithGracefulShutdown(e *echo.Echo, cfg *config.Config) error {
-	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
+	// Setup TLS
+	tlsResult, err := SetupTLS(cfg)
+	if err != nil {
+		return fmt.Errorf("TLS setup failed: %w", err)
+	}
 
-	go func() {
-		if err := e.Start(addr); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slog.Error("server error", "error", err)
+	// Channel for server errors
+	errChan := make(chan error, 2)
+
+	// HTTP redirect server for ACME mode
+	var httpServer *http.Server
+
+	switch tlsResult.Mode {
+	case TLSModeOff:
+		// Plain HTTP on configured port
+		addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
+		go func() {
+			slog.Info("Server running", "url", cfg.Server.BaseURL)
+			if err := e.Start(addr); err != nil && !errors.Is(err, http.ErrServerClosed) {
+				errChan <- err
+			}
+		}()
+
+	case TLSModeACME:
+		// HTTPS on :443
+		go func() {
+			slog.Info("Server running", "url", cfg.Server.BaseURL)
+			if err := startTLSServer(e, ":443", tlsResult.TLSConfig); err != nil && !errors.Is(err, http.ErrServerClosed) {
+				errChan <- err
+			}
+		}()
+
+		// HTTP redirect server on :80
+		httpServer = &http.Server{
+			Addr:              ":80",
+			Handler:           tlsResult.HTTPHandler,
+			ReadHeaderTimeout: 10 * time.Second,
 		}
-	}()
+		go func() {
+			slog.Info("HTTP→HTTPS redirect active", "addr", ":80")
+			if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+				errChan <- err
+			}
+		}()
 
-	// Wait for interrupt signal
+	case TLSModeSelfSigned, TLSModeManual:
+		// HTTPS on configured port
+		addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
+		go func() {
+			slog.Info("Server running", "url", cfg.Server.BaseURL)
+			if err := startTLSServer(e, addr, tlsResult.TLSConfig); err != nil && !errors.Is(err, http.ErrServerClosed) {
+				errChan <- err
+			}
+		}()
+	}
+
+	// Wait for interrupt signal or error
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
 
-	slog.Info("shutting down server")
+	select {
+	case <-quit:
+		slog.Info("shutting down server")
+	case err := <-errChan:
+		slog.Error("server error", "error", err)
+		return err
+	}
 
+	// Graceful shutdown
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	// Shutdown main server
 	if err := e.Shutdown(shutdownCtx); err != nil {
-		return fmt.Errorf("failed to shutdown server: %w", err)
+		slog.Error("failed to shutdown main server", "error", err)
+	}
+
+	// Shutdown HTTP redirect server if running
+	if httpServer != nil {
+		if err := httpServer.Shutdown(shutdownCtx); err != nil {
+			slog.Error("failed to shutdown HTTP redirect server", "error", err)
+		}
 	}
 
 	slog.Info("server stopped")
 	return nil
 }
 
-func setupLogger(level, format string) {
-	var logLevel slog.Level
-	switch level {
-	case "debug":
-		logLevel = slog.LevelDebug
-	case "warn":
-		logLevel = slog.LevelWarn
-	case "error":
-		logLevel = slog.LevelError
-	default:
-		logLevel = slog.LevelInfo
+// startTLSServer starts the Echo server with a custom TLS configuration.
+func startTLSServer(e *echo.Echo, addr string, tlsConfig *tls.Config) error {
+	lc := &net.ListenConfig{}
+	ln, err := lc.Listen(context.Background(), "tcp", addr)
+	if err != nil {
+		return err
 	}
-
-	var handler slog.Handler
-	if format == "json" {
-		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel})
-	} else {
-		handler = tint.NewHandler(os.Stdout, &tint.Options{Level: logLevel})
-	}
-
-	slog.SetDefault(slog.New(handler))
+	e.TLSListener = tls.NewListener(ln, tlsConfig)
+	e.TLSServer.TLSConfig = tlsConfig
+	return e.Server.Serve(e.TLSListener)
 }

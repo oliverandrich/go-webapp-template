@@ -30,6 +30,7 @@ just dev
 - **[go-i18n](https://github.com/nicksnyder/go-i18n)** - Internationalization support
 - **[urfave/cli](https://cli.urfave.org/)** - CLI with TOML configuration
 - **[slog](https://pkg.go.dev/log/slog)** - Structured logging
+- **Automatic TLS** - Let's Encrypt, self-signed, or manual certificates
 - CSRF protection with secure cookies
 - Content-hashed static assets with immutable caching
 - Custom Echo context with htmx request detection
@@ -103,15 +104,50 @@ just tidy     # Tidy Go modules
 
 Configuration via `config.toml` or environment variables:
 
-| Setting              | Env Variable         | Default               | Description                       |
-| -------------------- | -------------------- | --------------------- | --------------------------------- |
-| server.host          | SERVER_HOST          | localhost             | Bind address                      |
-| server.port          | SERVER_PORT          | 8080                  | Port number                       |
-| server.base_url      | SERVER_BASE_URL      | http://localhost:8080 | Public URL                        |
-| server.max_body_size | SERVER_MAX_BODY_SIZE | 1                     | Max body size (MB)                |
-| log.level            | LOG_LEVEL            | info                  | Log level (debug/info/warn/error) |
-| log.format           | LOG_FORMAT           | text                  | Log format (text/json)            |
-| database.dsn         | DATABASE_DSN         | ./data/app.db         | SQLite path                       |
+| Setting              | Env Variable         | Default               | Description                            |
+| -------------------- | -------------------- | --------------------- | -------------------------------------- |
+| server.host          | HOST                 | localhost             | Bind address                           |
+| server.port          | PORT                 | 8080                  | Port number                            |
+| server.base_url      | BASE_URL             | (auto-generated)      | Public URL                             |
+| server.max_body_size | MAX_BODY_SIZE        | 1                     | Max body size (MB)                     |
+| log.level            | LOG_LEVEL            | info                  | Log level (debug/info/warn/error)      |
+| log.format           | LOG_FORMAT           | text                  | Log format (text/json)                 |
+| database.dsn         | DATABASE_DSN         | ./data/app.db         | SQLite path                            |
+| tls.mode             | TLS_MODE             | auto                  | TLS mode (auto/acme/selfsigned/manual/off) |
+| tls.cert_dir         | TLS_CERT_DIR         | ./data/certs          | Directory for auto-generated certs     |
+| tls.email            | TLS_EMAIL            |                       | Email for Let's Encrypt (required for acme) |
+| tls.cert_file        | TLS_CERT_FILE        |                       | Path to certificate (manual mode)      |
+| tls.key_file         | TLS_KEY_FILE         |                       | Path to private key (manual mode)      |
+
+## TLS Configuration
+
+The server automatically configures TLS based on the environment:
+
+| Mode | Description |
+|------|-------------|
+| `auto` | Automatic detection (default): localhost → no TLS, otherwise → selfsigned |
+| `off` | No TLS (HTTP only) |
+| `acme` | Let's Encrypt certificates (requires ports 80/443 and `TLS_EMAIL`) |
+| `selfsigned` | Auto-generated ECDSA P-256 certificate (1 year validity) |
+| `manual` | User-provided certificate files |
+
+**Examples:**
+
+```bash
+# Development (localhost) - no TLS needed
+just dev
+
+# Production with Let's Encrypt
+HOST=example.com TLS_MODE=acme TLS_EMAIL=admin@example.com ./app
+
+# LAN/Internal with self-signed certificate
+HOST=192.168.1.50 TLS_MODE=selfsigned ./app
+
+# Manual certificate
+TLS_MODE=manual TLS_CERT_FILE=/path/to/cert.pem TLS_KEY_FILE=/path/to/key.pem ./app
+```
+
+Self-signed certificates are stored in `$TLS_CERT_DIR/selfsigned/` and reused until they expire (30 days before expiry triggers regeneration). The SHA256 fingerprint is logged on startup for verification.
 
 ## Static Assets
 

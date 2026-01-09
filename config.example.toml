@@ -13,3 +13,11 @@ format = "text"  # text, json
 # Database configuration
 [database]
 dsn = "./data/app.db"  # SQLite database path, use ":memory:" for in-memory
+
+# TLS configuration
+[tls]
+mode = "auto"              # auto, acme, selfsigned, manual, off
+cert_dir = "./data/certs"  # Directory for auto-generated certificates
+email = ""                 # Email for ACME/Let's Encrypt (required for acme mode)
+cert_file = ""             # Path to certificate file (manual mode)
+key_file = ""              # Path to private key file (manual mode)
