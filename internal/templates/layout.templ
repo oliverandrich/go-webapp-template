@@ -11,6 +11,7 @@ templ Layout(title string) {
 		</head>
 		<body>
 			{ children... }
+			<script src={ JSPath(ctx) }></script>
 		</body>
 	</html>
 }

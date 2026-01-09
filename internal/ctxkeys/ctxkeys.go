@@ -9,3 +9,6 @@ type CSRFToken struct{}
 
 // CSSPath is the context key for the CSS path.
 type CSSPath struct{}
+
+// JSPath is the context key for the JS (htmx) path.
+type JSPath struct{}

@@ -7,12 +7,14 @@ A modern, minimal Go web application template using Echo, GORM, templ, and Tailw
 - **[Echo](https://echo.labstack.com/)** - High performance web framework
 - **[GORM](https://gorm.io/)** + SQLite - Database ORM with SQLite backend
 - **[templ](https://templ.guide/)** - Type-safe HTML templating
+- **[htmx](https://htmx.org/)** - High power tools for HTML (auto-downloaded, no Node.js)
 - **[Tailwind CSS](https://tailwindcss.com/)** v4 - Utility-first CSS (standalone CLI, no Node.js)
 - **[go-i18n](https://github.com/nicksnyder/go-i18n)** - Internationalization support
 - **[urfave/cli](https://cli.urfave.org/)** - CLI with TOML configuration
 - **[slog](https://pkg.go.dev/log/slog)** - Structured logging
 - CSRF protection with secure cookies
 - Content-hashed static assets with immutable caching
+- Custom Echo context with htmx request detection
 
 ## Project Structure
 
@@ -20,12 +22,14 @@ A modern, minimal Go web application template using Echo, GORM, templ, and Tailw
 ├── cmd/app/              # Application entrypoint
 ├── internal/
 │   ├── config/           # Configuration handling
+│   ├── ctxkeys/          # Typed context keys
 │   ├── database/         # Database connection and migrations
 │   ├── handlers/         # HTTP handlers
+│   ├── htmx/             # htmx request parsing
 │   ├── i18n/             # Internationalization
 │   ├── models/           # GORM models
 │   ├── repository/       # Data access layer
-│   ├── server/           # Server setup, middleware, routing
+│   ├── server/           # Server setup, middleware, routing, custom context
 │   └── templates/        # templ templates and helpers
 ├── assets/
 │   └── css/input.css     # Tailwind CSS input
@@ -93,10 +97,28 @@ Configuration via `config.toml` or environment variables:
 
 ## Static Assets
 
-CSS is built with Tailwind CSS and served with content-hash filenames for optimal caching:
+CSS and JS are served with content-hash filenames for optimal caching:
 
-- **Production** (`just build`): `styles.abc123.css` with immutable cache headers
-- **Development** (`just dev`): `styles.dev.css` with no-cache headers
+- **Production** (`just build`): `styles.abc123.css`, `htmx.abc123.js` with immutable cache headers
+- **Development** (`just dev`): `styles.dev.css`, `htmx.dev.js` with no-cache headers
+
+## htmx Integration
+
+htmx is automatically downloaded during build. Access htmx request info in handlers:
+
+```go
+func (h *Handlers) Example(c echo.Context) error {
+    cc := c.(*server.Context)
+    if cc.Htmx.IsHtmx {
+        // Partial response for htmx
+        return Render(cc, http.StatusOK, templates.Partial())
+    }
+    // Full page response
+    return Render(cc, http.StatusOK, templates.FullPage())
+}
+```
+
+Available fields: `IsHtmx`, `IsBoosted`, `CurrentURL`, `Target`, `Trigger`, `TriggerName`, `Prompt`, `IsHistoryRestore`
 
 ## License
 

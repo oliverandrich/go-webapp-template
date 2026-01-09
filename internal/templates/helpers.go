@@ -40,3 +40,11 @@ func CSSPath(ctx context.Context) string {
 	}
 	return "/static/css/styles.css"
 }
+
+// JSPath returns the path to the hashed htmx JS file.
+func JSPath(ctx context.Context) string {
+	if path, ok := ctx.Value(ctxkeys.JSPath{}).(string); ok {
+		return path
+	}
+	return "/static/js/htmx.js"
+}

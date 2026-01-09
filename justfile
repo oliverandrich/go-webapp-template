@@ -16,8 +16,17 @@ css:
     hash=$(md5sum static/css/styles.css | cut -c1-8)
     mv static/css/styles.css "static/css/styles.${hash}.css"
 
+# Download and hash htmx (latest 2.x)
+htmx:
+    #!/usr/bin/env bash
+    mkdir -p static/js
+    rm -f static/js/htmx.*.js
+    curl -sL "https://unpkg.com/htmx.org@2/dist/htmx.min.js" -o static/js/htmx.js
+    hash=$(md5sum static/js/htmx.js | cut -c1-8)
+    mv static/js/htmx.js "static/js/htmx.${hash}.js"
+
 # Build the app binary
-build: templ css
+build: templ css htmx
     go build -o app ./cmd/app
 
 # Run the app
@@ -52,6 +61,7 @@ clean:
     rm -f coverage.out coverage.html
     rm -rf tmp/
     rm -f static/css/styles.*.css
+    rm -f static/js/htmx.*.js
 
 # Tidy dependencies
 tidy:

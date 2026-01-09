@@ -27,8 +27,8 @@ func setupMiddleware(e *echo.Echo, cfg *config.Config, assets *Assets) {
 	e.Use(staticCacheHeaders())
 	e.Use(csrfMiddleware(cfg))
 	e.Use(csrfToContext())
-	e.Use(assetsToContext(assets))
 	e.Use(i18nMiddleware())
+	e.Use(customContext(assets))
 }
 
 // csrfMiddleware configures CSRF protection.
