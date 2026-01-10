@@ -32,6 +32,7 @@ just dev
 - **[slog](https://pkg.go.dev/log/slog)** - Structured logging
 - **Automatic TLS** - Let's Encrypt, self-signed, or manual certificates
 - **WebAuthn/Passkeys** - Passwordless authentication with usernameless login
+- **Email Authentication** - Optional email-based registration with verification
 - CSRF protection with secure cookies
 - Content-hashed static assets with immutable caching
 - Custom Echo context with htmx request detection
@@ -126,6 +127,15 @@ Configuration via `config.toml` or environment variables:
 | session.max_age      | SESSION_MAX_AGE      | 604800                | Session max age (seconds, 7 days)      |
 | session.hash_key     | SESSION_HASH_KEY     | (auto in dev)         | 32-byte hex HMAC key                   |
 | session.block_key    | SESSION_BLOCK_KEY    |                       | 32-byte hex AES key (optional)         |
+| auth.use_email       | AUTH_USE_EMAIL       | false                 | Use email instead of username          |
+| auth.require_verification | AUTH_REQUIRE_VERIFICATION | true         | Require email verification before login |
+| smtp.host            | SMTP_HOST            |                       | SMTP server host                       |
+| smtp.port            | SMTP_PORT            | 587                   | SMTP port (465 for TLS, 587 for STARTTLS) |
+| smtp.username        | SMTP_USERNAME        |                       | SMTP username                          |
+| smtp.password        | SMTP_PASSWORD        |                       | SMTP password                          |
+| smtp.from            | SMTP_FROM            |                       | Sender email address                   |
+| smtp.from_name       | SMTP_FROM_NAME       |                       | Sender display name                    |
+| smtp.tls             | SMTP_TLS             | true                  | Enable TLS (auto-detects mode by port) |
 
 ## TLS Configuration
 
@@ -191,12 +201,41 @@ Built-in passwordless authentication using WebAuthn/Passkeys:
 - Multiple passkeys per user
 - Signed session cookies (no database session storage)
 - Passkey management page
+- Recovery codes for account recovery
 
 **Routes:**
-- `GET /auth/register` - Registration page (username required)
+- `GET /auth/register` - Registration page
 - `GET /auth/login` - Login page (no username needed)
 - `GET /auth/credentials` - Manage passkeys (protected)
+- `GET /auth/recovery-codes` - View recovery codes (protected)
 - `POST /auth/logout` - Logout
+
+### Email Mode
+
+Enable `auth.use_email=true` to use email addresses instead of usernames:
+
+- Users register with email + display name
+- Verification email sent before login is allowed
+- Requires SMTP configuration
+
+**Additional routes in email mode:**
+- `GET /auth/verify-email?token=...` - Email verification link
+- `GET /auth/verify-pending` - "Check your inbox" page
+- `POST /auth/resend-verification` - Resend verification email
+
+**Example configuration:**
+```toml
+[auth]
+use_email = true
+
+[smtp]
+host = "smtp.example.com"
+port = 587
+username = "apikey"
+password = "your-api-key"
+from = "noreply@example.com"
+from_name = "My App"
+```
 
 **Configuration:**
 ```bash
