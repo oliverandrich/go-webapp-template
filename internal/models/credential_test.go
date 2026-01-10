@@ -89,5 +89,5 @@ func TestTransportsFromWebAuthn_Single(t *testing.T) {
 func TestAllModels(t *testing.T) {
 	allModels := models.AllModels()
 
-	assert.Len(t, allModels, 2)
+	assert.Len(t, allModels, 3) // User, Credential, RecoveryCode
 }

@@ -143,3 +143,58 @@ func (m *Manager) Clear() *http.Cookie {
 		SameSite: http.SameSiteLaxMode,
 	}
 }
+
+// Flash cookie name.
+const flashCookieName = "flash"
+
+// FlashData contains temporary data that is cleared after reading.
+type FlashData struct {
+	RecoveryCodes []string `json:"rc,omitempty"`
+}
+
+// SetFlash creates a flash cookie with temporary data.
+func (m *Manager) SetFlash(data *FlashData) (*http.Cookie, error) {
+	encoded, err := m.sc.Encode(flashCookieName, data)
+	if err != nil {
+		return nil, err
+	}
+
+	return &http.Cookie{
+		Name:     flashCookieName,
+		Value:    encoded,
+		Path:     "/",
+		MaxAge:   300, // 5 minutes max
+		HttpOnly: true,
+		Secure:   m.secure,
+		SameSite: http.SameSiteLaxMode,
+	}, nil
+}
+
+// GetFlash reads and returns the flash data.
+// Returns nil if no flash cookie exists.
+func (m *Manager) GetFlash(r *http.Request) *FlashData {
+	cookie, err := r.Cookie(flashCookieName)
+	if err != nil {
+		return nil
+	}
+
+	var data FlashData
+	if err := m.sc.Decode(flashCookieName, cookie.Value, &data); err != nil {
+		return nil
+	}
+
+	return &data
+}
+
+// ClearFlash returns a cookie that clears the flash data.
+func (m *Manager) ClearFlash() *http.Cookie {
+	return &http.Cookie{
+		Name:     flashCookieName,
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   m.secure,
+		SameSite: http.SameSiteLaxMode,
+	}
+}

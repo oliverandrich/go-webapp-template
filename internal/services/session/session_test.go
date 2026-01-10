@@ -280,3 +280,91 @@ func TestClear_SecureMode(t *testing.T) {
 
 	assert.True(t, cookie.Secure)
 }
+
+func TestSetFlash(t *testing.T) {
+	cfg := newTestConfig()
+	mgr, err := session.NewManager(cfg, false)
+	require.NoError(t, err)
+
+	flash := &session.FlashData{
+		RecoveryCodes: []string{"code1", "code2", "code3"},
+	}
+
+	cookie, err := mgr.SetFlash(flash)
+
+	require.NoError(t, err)
+	assert.Equal(t, "flash", cookie.Name)
+	assert.NotEmpty(t, cookie.Value)
+	assert.Equal(t, 300, cookie.MaxAge)
+	assert.True(t, cookie.HttpOnly)
+}
+
+func TestGetFlash(t *testing.T) {
+	cfg := newTestConfig()
+	mgr, err := session.NewManager(cfg, false)
+	require.NoError(t, err)
+
+	flash := &session.FlashData{
+		RecoveryCodes: []string{"code1", "code2", "code3"},
+	}
+	cookie, err := mgr.SetFlash(flash)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.AddCookie(cookie)
+
+	result := mgr.GetFlash(req)
+
+	require.NotNil(t, result)
+	assert.Equal(t, []string{"code1", "code2", "code3"}, result.RecoveryCodes)
+}
+
+func TestGetFlash_NoCookie(t *testing.T) {
+	cfg := newTestConfig()
+	mgr, err := session.NewManager(cfg, false)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+
+	result := mgr.GetFlash(req)
+
+	assert.Nil(t, result)
+}
+
+func TestGetFlash_InvalidCookie(t *testing.T) {
+	cfg := newTestConfig()
+	mgr, err := session.NewManager(cfg, false)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.AddCookie(&http.Cookie{
+		Name:  "flash",
+		Value: "invalid-value",
+	})
+
+	result := mgr.GetFlash(req)
+
+	assert.Nil(t, result)
+}
+
+func TestClearFlash(t *testing.T) {
+	cfg := newTestConfig()
+	mgr, err := session.NewManager(cfg, false)
+	require.NoError(t, err)
+
+	cookie := mgr.ClearFlash()
+
+	assert.Equal(t, "flash", cookie.Name)
+	assert.Empty(t, cookie.Value)
+	assert.Equal(t, -1, cookie.MaxAge)
+}
+
+func TestClearFlash_SecureMode(t *testing.T) {
+	cfg := newTestConfig()
+	mgr, err := session.NewManager(cfg, true)
+	require.NoError(t, err)
+
+	cookie := mgr.ClearFlash()
+
+	assert.True(t, cookie.Secure)
+}

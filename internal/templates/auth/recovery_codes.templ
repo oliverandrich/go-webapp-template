@@ -1,0 +1,80 @@
+package auth
+
+import "codeberg.org/oliverandrich/go-webapp-template/internal/templates"
+
+templ RecoveryCodes(codes []string) {
+	@templates.Layout(templates.T(ctx, "recovery_codes_title")) {
+		<main class="min-h-screen flex items-center justify-center px-4 py-12">
+			<div class="w-full max-w-md">
+				<div class="text-center mb-6">
+					<h1 class="text-2xl font-bold text-gray-900">
+						{ templates.T(ctx, "recovery_codes_heading") }
+					</h1>
+					<p class="mt-2 text-sm text-gray-600">
+						{ templates.T(ctx, "recovery_codes_description") }
+					</p>
+				</div>
+
+				<div class="bg-white rounded-md border border-gray-200 p-6">
+					<div class="bg-gray-50 rounded-md p-4 mb-4">
+						<div id="codes-grid" class="grid grid-cols-2 gap-2 font-mono text-sm">
+							for _, code := range codes {
+								<div class="bg-white px-3 py-2 rounded border text-center">
+									{ code }
+								</div>
+							}
+						</div>
+					</div>
+
+					<div class="flex gap-2 mb-4">
+						<button
+							id="copy-codes"
+							class="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+						>
+							{ templates.T(ctx, "recovery_codes_copy") }
+						</button>
+						<button
+							id="download-codes"
+							class="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+						>
+							{ templates.T(ctx, "recovery_codes_download") }
+						</button>
+					</div>
+
+					<a
+						href="/dashboard"
+						class="block w-full px-4 py-2.5 font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-md text-center"
+					>
+						{ templates.T(ctx, "recovery_codes_continue") }
+					</a>
+				</div>
+
+				<p class="mt-4 text-center text-sm text-yellow-600">
+					{ templates.T(ctx, "recovery_codes_warning") }
+				</p>
+			</div>
+		</main>
+		@recoveryCodesScript()
+	}
+}
+
+templ recoveryCodesScript() {
+	<script>
+		(function() {
+			const codes = Array.from(document.querySelectorAll('#codes-grid > div')).map(el => el.textContent.trim());
+
+			document.getElementById('copy-codes').addEventListener('click', () => {
+				navigator.clipboard.writeText(codes.join('\n'));
+			});
+
+			document.getElementById('download-codes').addEventListener('click', () => {
+				const content = 'Recovery Codes\n\n' + codes.join('\n') + '\n\nKeep these codes safe!';
+				const blob = new Blob([content], { type: 'text/plain' });
+				const a = document.createElement('a');
+				a.href = URL.createObjectURL(blob);
+				a.download = 'recovery-codes.txt';
+				a.click();
+			});
+		})();
+	</script>
+}

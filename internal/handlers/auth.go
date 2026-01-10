@@ -12,6 +12,7 @@ import (
 	"codeberg.org/oliverandrich/go-webapp-template/internal/appcontext"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/services/recovery"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/services/session"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/services/webauthn"
 	authtpl "codeberg.org/oliverandrich/go-webapp-template/internal/templates/auth"
@@ -25,6 +26,7 @@ type AuthHandlers struct {
 	repo     *repository.Repository
 	webauthn *webauthn.Service
 	sessions *session.Manager
+	recovery *recovery.Service
 }
 
 // NewAuth creates a new AuthHandlers instance.
@@ -33,6 +35,7 @@ func NewAuth(repo *repository.Repository, wa *webauthn.Service, sess *session.Ma
 		repo:     repo,
 		webauthn: wa,
 		sessions: sess,
+		recovery: recovery.NewService(),
 	}
 }
 
@@ -141,14 +144,38 @@ func (h *AuthHandlers) RegisterFinish(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to store credential"})
 	}
 
+	// Generate recovery codes
+	codes, hashes, err := h.recovery.GenerateCodes(recovery.CodeCount)
+	if err != nil {
+		slog.Error("failed to generate recovery codes", "error", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to generate recovery codes"})
+	}
+
+	// Store recovery codes
+	if createErr := h.repo.CreateRecoveryCodes(c.Request().Context(), user.ID, hashes); createErr != nil {
+		slog.Error("failed to store recovery codes", "error", createErr)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to store recovery codes"})
+	}
+
 	// Create session cookie
-	cookie, err := h.sessions.Create(user.ID, user.Username)
+	sessionCookie, err := h.sessions.Create(user.ID, user.Username)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to create session"})
 	}
-	c.SetCookie(cookie)
+	c.SetCookie(sessionCookie)
 
-	return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
+	// Store codes in flash cookie for display on next page
+	flashCookie, err := h.sessions.SetFlash(&session.FlashData{RecoveryCodes: codes})
+	if err != nil {
+		slog.Error("failed to create flash cookie", "error", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to store recovery codes"})
+	}
+	c.SetCookie(flashCookie)
+
+	return c.JSON(http.StatusOK, map[string]any{
+		"status":   "ok",
+		"redirect": "/auth/recovery-codes",
+	})
 }
 
 // LoginPage renders the login page.
@@ -341,4 +368,116 @@ func (h *AuthHandlers) DeleteCredential(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
+}
+
+// RecoveryPage renders the recovery login page.
+func (h *AuthHandlers) RecoveryPage(c echo.Context) error {
+	return Render(c, http.StatusOK, authtpl.Recovery())
+}
+
+// RecoveryLoginRequest is the request body for recovery login.
+type RecoveryLoginRequest struct {
+	Username string `json:"username" form:"username"`
+	Code     string `json:"code" form:"code"`
+}
+
+// RecoveryLogin authenticates a user with a recovery code.
+func (h *AuthHandlers) RecoveryLogin(c echo.Context) error {
+	var req RecoveryLoginRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
+	}
+
+	if req.Username == "" || req.Code == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "username and code are required"})
+	}
+
+	// Find user
+	user, err := h.repo.GetUserByUsername(c.Request().Context(), req.Username)
+	if err != nil {
+		// Don't reveal if user exists or not
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid username or recovery code"})
+	}
+
+	// Normalize and validate recovery code
+	normalizedCode := recovery.NormalizeCode(req.Code)
+	valid, err := h.repo.ValidateAndUseRecoveryCode(c.Request().Context(), user.ID, normalizedCode)
+	if err != nil {
+		slog.Error("failed to validate recovery code", "error", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "validation error"})
+	}
+	if !valid {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid username or recovery code"})
+	}
+
+	// Create session cookie
+	cookie, err := h.sessions.Create(user.ID, user.Username)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to create session"})
+	}
+	c.SetCookie(cookie)
+
+	// Get remaining codes count for warning
+	remaining, _ := h.repo.GetUnusedRecoveryCodeCount(c.Request().Context(), user.ID)
+
+	return c.JSON(http.StatusOK, map[string]any{
+		"status":          "ok",
+		"remaining_codes": remaining,
+	})
+}
+
+// RegenerateRecoveryCodes generates new recovery codes and invalidates old ones.
+func (h *AuthHandlers) RegenerateRecoveryCodes(c echo.Context) error {
+	cc, ok := c.(*appcontext.Context)
+	if !ok || !cc.IsAuthenticated() {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "not authenticated"})
+	}
+	user := cc.GetUser()
+
+	// Delete old codes
+	if err := h.repo.DeleteRecoveryCodes(c.Request().Context(), user.ID); err != nil {
+		slog.Error("failed to delete old recovery codes", "error", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to regenerate codes"})
+	}
+
+	// Generate new codes
+	codes, hashes, err := h.recovery.GenerateCodes(recovery.CodeCount)
+	if err != nil {
+		slog.Error("failed to generate recovery codes", "error", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to generate codes"})
+	}
+
+	// Store new codes
+	if createErr := h.repo.CreateRecoveryCodes(c.Request().Context(), user.ID, hashes); createErr != nil {
+		slog.Error("failed to store recovery codes", "error", createErr)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to store codes"})
+	}
+
+	// Store codes in flash cookie for display on next page
+	flashCookie, err := h.sessions.SetFlash(&session.FlashData{RecoveryCodes: codes})
+	if err != nil {
+		slog.Error("failed to create flash cookie", "error", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to store codes"})
+	}
+	c.SetCookie(flashCookie)
+
+	return c.JSON(http.StatusOK, map[string]any{
+		"status":   "ok",
+		"redirect": "/auth/recovery-codes",
+	})
+}
+
+// RecoveryCodesPage displays recovery codes from flash data.
+func (h *AuthHandlers) RecoveryCodesPage(c echo.Context) error {
+	// Get codes from flash cookie
+	flash := h.sessions.GetFlash(c.Request())
+	if flash == nil || len(flash.RecoveryCodes) == 0 {
+		// No codes to display, redirect to dashboard
+		return c.Redirect(http.StatusSeeOther, "/dashboard")
+	}
+
+	// Clear flash cookie
+	c.SetCookie(h.sessions.ClearFlash())
+
+	return Render(c, http.StatusOK, authtpl.RecoveryCodes(flash.RecoveryCodes))
 }

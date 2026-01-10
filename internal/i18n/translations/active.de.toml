@@ -37,3 +37,22 @@ dashboard_title = "Dashboard"
 dashboard_heading = "Dashboard"
 dashboard_welcome = "Willkommen in deinem geschützten Dashboard!"
 manage_passkeys = "Passkeys verwalten"
+regenerate_codes = "Recovery Codes erneuern"
+
+# Recovery
+recovery_title = "Konto wiederherstellen"
+recovery_heading = "Konto wiederherstellen"
+recovery_description = "Gib deinen Benutzernamen und einen Recovery Code ein"
+recovery_code = "Recovery Code"
+recovery_button = "Anmelden"
+recovery_link = "Passkey verloren?"
+back_to_login = "Zurück zur Anmeldung"
+
+# Recovery Codes Display
+recovery_codes_title = "Deine Recovery Codes"
+recovery_codes_heading = "Recovery Codes speichern"
+recovery_codes_description = "Speichere diese Codes an einem sicheren Ort. Du kannst sie verwenden, um dich anzumelden, wenn du keinen Zugriff auf deinen Passkey hast. Jeder Code kann nur einmal verwendet werden."
+recovery_codes_copy = "Kopieren"
+recovery_codes_download = "Herunterladen"
+recovery_codes_continue = "Ich habe meine Codes gespeichert"
+recovery_codes_warning = "Diese Codes werden nur einmal angezeigt. Speichere sie jetzt!"

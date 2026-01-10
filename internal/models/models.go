@@ -8,5 +8,6 @@ func AllModels() []any {
 	return []any{
 		&User{},
 		&Credential{},
+		&RecoveryCode{},
 	}
 }

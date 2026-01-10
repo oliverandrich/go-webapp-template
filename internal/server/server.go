@@ -123,6 +123,9 @@ func setupRoutes(e *echo.Echo, repo *repository.Repository, wa *webauthn.Service
 	e.POST("/auth/login/begin", auth.LoginBegin)
 	e.POST("/auth/login/finish", auth.LoginFinish)
 	e.POST("/auth/logout", auth.Logout)
+	e.GET("/auth/recovery", auth.RecoveryPage)
+	e.POST("/auth/recovery", auth.RecoveryLogin)
+	e.GET("/auth/recovery-codes", auth.RecoveryCodesPage)
 
 	// Protected auth routes
 	protected := e.Group("/auth", RequireAuth())
@@ -130,6 +133,7 @@ func setupRoutes(e *echo.Echo, repo *repository.Repository, wa *webauthn.Service
 	protected.POST("/credentials/begin", auth.AddCredentialBegin)
 	protected.POST("/credentials/finish", auth.AddCredentialFinish)
 	protected.DELETE("/credentials/:id", auth.DeleteCredential)
+	protected.POST("/credentials/recovery-codes", auth.RegenerateRecoveryCodes)
 }
 
 func startWithGracefulShutdown(e *echo.Echo, cfg *config.Config) error {
