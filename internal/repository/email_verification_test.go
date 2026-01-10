@@ -20,7 +20,7 @@ func TestCreateEmailVerificationToken(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 	tokenHash := "abc123hash"
 	expiresAt := time.Now().Add(24 * time.Hour)
 
@@ -41,7 +41,7 @@ func TestGetEmailVerificationToken(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 	tokenHash := "abc123hash"
 	expiresAt := time.Now().Add(24 * time.Hour)
 
@@ -71,7 +71,7 @@ func TestDeleteEmailVerificationToken(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 	tokenHash := "abc123hash"
 	expiresAt := time.Now().Add(24 * time.Hour)
 
@@ -94,7 +94,7 @@ func TestDeleteUserEmailVerificationTokens(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 	expiresAt := time.Now().Add(24 * time.Hour)
 
 	// Create multiple tokens for the user
@@ -119,7 +119,7 @@ func TestDeleteExpiredEmailVerificationTokens(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 
 	// Create an expired token
 	expiredAt := time.Now().Add(-1 * time.Hour)
@@ -151,12 +151,11 @@ func TestCreateUserWithEmail(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user, err := repo.CreateUserWithEmail(ctx, "test@example.com", "Test User")
+	user, err := repo.CreateUserWithEmail(ctx, "test@example.com")
 
 	require.NoError(t, err)
 	assert.NotZero(t, user.ID)
 	assert.Equal(t, "test@example.com", user.Username) // Username = email
-	assert.Equal(t, "Test User", user.DisplayName)
 	require.NotNil(t, user.Email)
 	assert.Equal(t, "test@example.com", *user.Email)
 	assert.False(t, user.EmailVerified)
@@ -167,10 +166,10 @@ func TestCreateUserWithEmail_DuplicateEmail(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	_, err := repo.CreateUserWithEmail(ctx, "test@example.com", "Test User")
+	_, err := repo.CreateUserWithEmail(ctx, "test@example.com")
 	require.NoError(t, err)
 
-	_, err = repo.CreateUserWithEmail(ctx, "test@example.com", "Another User")
+	_, err = repo.CreateUserWithEmail(ctx, "test@example.com")
 
 	assert.Error(t, err)
 }
@@ -180,7 +179,7 @@ func TestGetUserByEmail(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	created, err := repo.CreateUserWithEmail(ctx, "test@example.com", "Test User")
+	created, err := repo.CreateUserWithEmail(ctx, "test@example.com")
 	require.NoError(t, err)
 
 	retrieved, err := repo.GetUserByEmail(ctx, "test@example.com")
@@ -206,7 +205,7 @@ func TestEmailExists(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	_, err := repo.CreateUserWithEmail(ctx, "test@example.com", "Test User")
+	_, err := repo.CreateUserWithEmail(ctx, "test@example.com")
 	require.NoError(t, err)
 
 	exists, err := repo.EmailExists(ctx, "test@example.com")
@@ -231,7 +230,7 @@ func TestMarkEmailVerified(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user, err := repo.CreateUserWithEmail(ctx, "test@example.com", "Test User")
+	user, err := repo.CreateUserWithEmail(ctx, "test@example.com")
 	require.NoError(t, err)
 	assert.False(t, user.EmailVerified)
 

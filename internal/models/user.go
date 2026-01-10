@@ -14,7 +14,6 @@ import (
 type User struct { //nolint:govet // fieldalignment not critical for models
 	ID              int64        `gorm:"primaryKey" json:"id"`
 	Username        string       `gorm:"uniqueIndex;not null;size:64" json:"username"`
-	DisplayName     string       `gorm:"not null;size:128" json:"display_name"`
 	Email           *string      `gorm:"uniqueIndex;size:255" json:"email,omitempty"`
 	EmailVerified   bool         `gorm:"not null;default:false" json:"email_verified"`
 	EmailVerifiedAt *time.Time   `json:"email_verified_at,omitempty"`
@@ -35,9 +34,9 @@ func (u *User) WebAuthnName() string {
 	return u.Username
 }
 
-// WebAuthnDisplayName returns the user's display name.
+// WebAuthnDisplayName returns the user's display name (username).
 func (u *User) WebAuthnDisplayName() string {
-	return u.DisplayName
+	return u.Username
 }
 
 // WebAuthnCredentials returns the user's WebAuthn credentials.

@@ -20,7 +20,7 @@ func TestCreateRecoveryCodes(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 
 	svc := recovery.NewService()
 	_, hashes, err := svc.GenerateCodes(8)
@@ -41,7 +41,7 @@ func TestGetUnusedRecoveryCodeCount(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 
 	svc := recovery.NewService()
 	_, hashes, err := svc.GenerateCodes(8)
@@ -70,7 +70,7 @@ func TestValidateAndUseRecoveryCode(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 
 	svc := recovery.NewService()
 	plaintexts, hashes, err := svc.GenerateCodes(3)
@@ -95,7 +95,7 @@ func TestValidateAndUseRecoveryCode_InvalidCode(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 
 	svc := recovery.NewService()
 	_, hashes, err := svc.GenerateCodes(3)
@@ -113,7 +113,7 @@ func TestValidateAndUseRecoveryCode_AlreadyUsed(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 
 	svc := recovery.NewService()
 	plaintexts, hashes, err := svc.GenerateCodes(3)
@@ -138,8 +138,8 @@ func TestValidateAndUseRecoveryCode_WrongUser(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user1 := testutil.NewTestUser(t, db, "user1", "User 1")
-	user2 := testutil.NewTestUser(t, db, "user2", "User 2")
+	user1 := testutil.NewTestUser(t, db, "user1")
+	user2 := testutil.NewTestUser(t, db, "user2")
 
 	svc := recovery.NewService()
 	plaintexts, hashes, err := svc.GenerateCodes(3)
@@ -159,7 +159,7 @@ func TestDeleteRecoveryCodes(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 
 	svc := recovery.NewService()
 	_, hashes, err := svc.GenerateCodes(8)
@@ -180,8 +180,8 @@ func TestDeleteRecoveryCodes_OnlyAffectsUser(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user1 := testutil.NewTestUser(t, db, "user1", "User 1")
-	user2 := testutil.NewTestUser(t, db, "user2", "User 2")
+	user1 := testutil.NewTestUser(t, db, "user1")
+	user2 := testutil.NewTestUser(t, db, "user2")
 
 	svc := recovery.NewService()
 	_, hashes1, err := svc.GenerateCodes(8)
@@ -211,7 +211,7 @@ func TestHasRecoveryCodes(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 
 	// Initially no codes
 	has, err := repo.HasRecoveryCodes(ctx, user.ID)
@@ -234,7 +234,7 @@ func TestHasRecoveryCodes_IncludesUsedCodes(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 
 	svc := recovery.NewService()
 	plaintexts, hashes, err := svc.GenerateCodes(1)

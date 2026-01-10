@@ -20,7 +20,7 @@ func TestCreateCredential(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 
 	cred := &models.Credential{
 		UserID:       user.ID,
@@ -40,7 +40,7 @@ func TestGetCredentialsByUserID(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 	testutil.NewTestCredential(t, db, user.ID, "cred-1")
 	testutil.NewTestCredential(t, db, user.ID, "cred-2")
 
@@ -55,7 +55,7 @@ func TestGetCredentialsByUserID_Empty(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 
 	creds, err := repo.GetCredentialsByUserID(ctx, user.ID)
 
@@ -68,7 +68,7 @@ func TestUpdateCredentialSignCount(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 	cred := testutil.NewTestCredential(t, db, user.ID, "my-cred")
 
 	err := repo.UpdateCredentialSignCount(ctx, cred.CredentialID, 42)
@@ -86,7 +86,7 @@ func TestDeleteCredential(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 	cred := testutil.NewTestCredential(t, db, user.ID, "to-delete")
 
 	err := repo.DeleteCredential(ctx, cred.ID, user.ID)
@@ -104,8 +104,8 @@ func TestDeleteCredential_WrongUser(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user1 := testutil.NewTestUser(t, db, "user1", "User 1")
-	user2 := testutil.NewTestUser(t, db, "user2", "User 2")
+	user1 := testutil.NewTestUser(t, db, "user1")
+	user2 := testutil.NewTestUser(t, db, "user2")
 	cred := testutil.NewTestCredential(t, db, user1.ID, "user1-cred")
 
 	// Try to delete user1's credential as user2
@@ -124,7 +124,7 @@ func TestDeleteCredential_NotFound(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 
 	err := repo.DeleteCredential(ctx, 999, user.ID)
 
@@ -136,7 +136,7 @@ func TestCountUserCredentials(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 	testutil.NewTestCredential(t, db, user.ID, "cred-1")
 	testutil.NewTestCredential(t, db, user.ID, "cred-2")
 
@@ -151,7 +151,7 @@ func TestCountUserCredentials_Zero(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 
 	count, err := repo.CountUserCredentials(ctx, user.ID)
 

@@ -214,7 +214,7 @@ Built-in passwordless authentication using WebAuthn/Passkeys:
 
 Enable `auth.use_email=true` to use email addresses instead of usernames:
 
-- Users register with email + display name
+- Users register with email address
 - Verification email sent before login is allowed
 - Requires SMTP configuration
 

@@ -30,11 +30,10 @@ func NewTestDB(t *testing.T) *gorm.DB {
 }
 
 // NewTestUser creates a test user in the database.
-func NewTestUser(t *testing.T, db *gorm.DB, username, displayName string) *models.User {
+func NewTestUser(t *testing.T, db *gorm.DB, username string) *models.User {
 	t.Helper()
 	user := &models.User{
-		Username:    username,
-		DisplayName: displayName,
+		Username: username,
 	}
 	require.NoError(t, db.Create(user).Error)
 	return user

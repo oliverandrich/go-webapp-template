@@ -87,7 +87,7 @@ func TestRegisterBegin(t *testing.T) {
 	h, _ := newTestAuthHandlers(t)
 
 	e := echo.New()
-	body := strings.NewReader(`{"username":"newuser","display_name":"New User"}`)
+	body := strings.NewReader(`{"username":"newuser"}`)
 	req := httptest.NewRequest(http.MethodPost, "/auth/register/begin", body)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -105,7 +105,7 @@ func TestRegisterBegin_MissingUsername(t *testing.T) {
 	h, _ := newTestAuthHandlers(t)
 
 	e := echo.New()
-	body := strings.NewReader(`{"username":"","display_name":"Test"}`)
+	body := strings.NewReader(`{"username":""}`)
 	req := httptest.NewRequest(http.MethodPost, "/auth/register/begin", body)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -122,11 +122,11 @@ func TestRegisterBegin_UsernameExists(t *testing.T) {
 	h, repo := newTestAuthHandlers(t)
 
 	// Create existing user
-	_, err := repo.CreateUser(context.Background(), "existinguser", "Existing User")
+	_, err := repo.CreateUser(context.Background(), "existinguser")
 	require.NoError(t, err)
 
 	e := echo.New()
-	body := strings.NewReader(`{"username":"existinguser","display_name":"Test"}`)
+	body := strings.NewReader(`{"username":"existinguser"}`)
 	req := httptest.NewRequest(http.MethodPost, "/auth/register/begin", body)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -158,7 +158,7 @@ func TestRegisterFinish_SessionExpired(t *testing.T) {
 	h, repo := newTestAuthHandlers(t)
 
 	// Create user but don't store registration session
-	user := testutil.NewTestUser(t, repo.DB(), "testuser", "Test User")
+	user := testutil.NewTestUser(t, repo.DB(), "testuser")
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodPost, "/auth/register/finish?user_id="+string(rune(user.ID+'0')), nil)
@@ -275,7 +275,7 @@ func TestCredentialsPage_Unauthenticated(t *testing.T) {
 func TestCredentialsPage_Authenticated(t *testing.T) {
 	h, repo := newTestAuthHandlers(t)
 
-	user := testutil.NewTestUser(t, repo.DB(), "testuser", "Test User")
+	user := testutil.NewTestUser(t, repo.DB(), "testuser")
 	testutil.NewTestCredential(t, repo.DB(), user.ID, "cred-1")
 
 	e := echo.New()
@@ -310,7 +310,7 @@ func TestAddCredentialBegin_Unauthenticated(t *testing.T) {
 func TestAddCredentialBegin_Authenticated(t *testing.T) {
 	h, repo := newTestAuthHandlers(t)
 
-	user := testutil.NewTestUser(t, repo.DB(), "testuser", "Test User")
+	user := testutil.NewTestUser(t, repo.DB(), "testuser")
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodPost, "/auth/credentials/begin", nil)
@@ -341,7 +341,7 @@ func TestAddCredentialFinish_Unauthenticated(t *testing.T) {
 func TestAddCredentialFinish_SessionExpired(t *testing.T) {
 	h, repo := newTestAuthHandlers(t)
 
-	user := testutil.NewTestUser(t, repo.DB(), "testuser", "Test User")
+	user := testutil.NewTestUser(t, repo.DB(), "testuser")
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodPost, "/auth/credentials/finish", nil)
@@ -374,7 +374,7 @@ func TestDeleteCredential_Unauthenticated(t *testing.T) {
 func TestDeleteCredential_InvalidID(t *testing.T) {
 	h, repo := newTestAuthHandlers(t)
 
-	user := testutil.NewTestUser(t, repo.DB(), "testuser", "Test User")
+	user := testutil.NewTestUser(t, repo.DB(), "testuser")
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodDelete, "/auth/credentials/invalid", nil)
@@ -393,7 +393,7 @@ func TestDeleteCredential_InvalidID(t *testing.T) {
 func TestDeleteCredential_LastCredential(t *testing.T) {
 	h, repo := newTestAuthHandlers(t)
 
-	user := testutil.NewTestUser(t, repo.DB(), "testuser", "Test User")
+	user := testutil.NewTestUser(t, repo.DB(), "testuser")
 	cred := testutil.NewTestCredential(t, repo.DB(), user.ID, "only-cred")
 
 	e := echo.New()
@@ -413,7 +413,7 @@ func TestDeleteCredential_LastCredential(t *testing.T) {
 func TestDeleteCredential_Success(t *testing.T) {
 	h, repo := newTestAuthHandlers(t)
 
-	user := testutil.NewTestUser(t, repo.DB(), "testuser", "Test User")
+	user := testutil.NewTestUser(t, repo.DB(), "testuser")
 	cred1 := testutil.NewTestCredential(t, repo.DB(), user.ID, "cred-1")
 	testutil.NewTestCredential(t, repo.DB(), user.ID, "cred-2")
 
@@ -430,11 +430,10 @@ func TestDeleteCredential_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 }
 
-func TestRegisterBegin_DefaultDisplayName(t *testing.T) {
+func TestRegisterBegin_UsernameOnly(t *testing.T) {
 	h, _ := newTestAuthHandlers(t)
 
 	e := echo.New()
-	// Only provide username, display_name should default to username
 	body := strings.NewReader(`{"username":"testuser"}`)
 	req := httptest.NewRequest(http.MethodPost, "/auth/register/begin", body)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -515,7 +514,7 @@ func TestLoginFinish_EmptySessionID(t *testing.T) {
 func TestAddCredentialBegin_Success(t *testing.T) {
 	h, repo := newTestAuthHandlers(t)
 
-	user := testutil.NewTestUser(t, repo.DB(), "testuser", "Test User")
+	user := testutil.NewTestUser(t, repo.DB(), "testuser")
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodPost, "/auth/credentials/begin", nil)
@@ -532,7 +531,7 @@ func TestAddCredentialBegin_Success(t *testing.T) {
 func TestCredentialsPage_NoCredentials(t *testing.T) {
 	h, repo := newTestAuthHandlers(t)
 
-	user := testutil.NewTestUser(t, repo.DB(), "testuser", "Test User")
+	user := testutil.NewTestUser(t, repo.DB(), "testuser")
 	// Don't add any credentials
 
 	e := echo.New()
@@ -592,7 +591,7 @@ func TestRegisterBegin_EmailMode_Success(t *testing.T) {
 	h, _ := newTestEmailAuthHandlers(t)
 
 	e := echo.New()
-	body := strings.NewReader(`{"email":"test@example.com","display_name":"Test User"}`)
+	body := strings.NewReader(`{"email":"test@example.com"}`)
 	req := httptest.NewRequest(http.MethodPost, "/auth/register/begin", body)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -610,7 +609,7 @@ func TestRegisterBegin_EmailMode_MissingEmail(t *testing.T) {
 	h, _ := newTestEmailAuthHandlers(t)
 
 	e := echo.New()
-	body := strings.NewReader(`{"email":"","display_name":"Test"}`)
+	body := strings.NewReader(`{"email":""}`)
 	req := httptest.NewRequest(http.MethodPost, "/auth/register/begin", body)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -627,11 +626,11 @@ func TestRegisterBegin_EmailMode_EmailExists(t *testing.T) {
 	h, repo := newTestEmailAuthHandlers(t)
 
 	// Create existing user with email
-	_, err := repo.CreateUserWithEmail(context.Background(), "existing@example.com", "Existing User")
+	_, err := repo.CreateUserWithEmail(context.Background(), "existing@example.com")
 	require.NoError(t, err)
 
 	e := echo.New()
-	body := strings.NewReader(`{"email":"existing@example.com","display_name":"Test"}`)
+	body := strings.NewReader(`{"email":"existing@example.com"}`)
 	req := httptest.NewRequest(http.MethodPost, "/auth/register/begin", body)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -644,11 +643,10 @@ func TestRegisterBegin_EmailMode_EmailExists(t *testing.T) {
 	assert.Contains(t, rec.Body.String(), "email already registered")
 }
 
-func TestRegisterBegin_EmailMode_DefaultDisplayName(t *testing.T) {
+func TestRegisterBegin_EmailMode_EmailOnly(t *testing.T) {
 	h, _ := newTestEmailAuthHandlers(t)
 
 	e := echo.New()
-	// Only provide email, display_name should default to email
 	body := strings.NewReader(`{"email":"test@example.com"}`)
 	req := httptest.NewRequest(http.MethodPost, "/auth/register/begin", body)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)

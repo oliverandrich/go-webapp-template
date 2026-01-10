@@ -19,12 +19,11 @@ func TestCreateUser(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user, err := repo.CreateUser(ctx, "testuser", "Test User")
+	user, err := repo.CreateUser(ctx, "testuser")
 
 	require.NoError(t, err)
 	assert.NotZero(t, user.ID)
 	assert.Equal(t, "testuser", user.Username)
-	assert.Equal(t, "Test User", user.DisplayName)
 	assert.NotZero(t, user.CreatedAt)
 }
 
@@ -33,10 +32,10 @@ func TestCreateUser_DuplicateUsername(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	_, err := repo.CreateUser(ctx, "testuser", "Test User")
+	_, err := repo.CreateUser(ctx, "testuser")
 	require.NoError(t, err)
 
-	_, err = repo.CreateUser(ctx, "testuser", "Another User")
+	_, err = repo.CreateUser(ctx, "testuser")
 
 	assert.Error(t, err)
 }
@@ -46,7 +45,7 @@ func TestGetUserByID(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	created, err := repo.CreateUser(ctx, "testuser", "Test User")
+	created, err := repo.CreateUser(ctx, "testuser")
 	require.NoError(t, err)
 
 	retrieved, err := repo.GetUserByID(ctx, created.ID)
@@ -71,7 +70,7 @@ func TestGetUserByID_WithCredentials(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 	testutil.NewTestCredential(t, db, user.ID, "credential-1")
 	testutil.NewTestCredential(t, db, user.ID, "credential-2")
 
@@ -86,7 +85,7 @@ func TestGetUserByUsername(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	created, err := repo.CreateUser(ctx, "testuser", "Test User")
+	created, err := repo.CreateUser(ctx, "testuser")
 	require.NoError(t, err)
 
 	retrieved, err := repo.GetUserByUsername(ctx, "testuser")
@@ -110,7 +109,7 @@ func TestUserExists(t *testing.T) {
 	repo := repository.New(db)
 	ctx := context.Background()
 
-	_, err := repo.CreateUser(ctx, "testuser", "Test User")
+	_, err := repo.CreateUser(ctx, "testuser")
 	require.NoError(t, err)
 
 	exists, err := repo.UserExists(ctx, "testuser")

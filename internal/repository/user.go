@@ -10,10 +10,9 @@ import (
 )
 
 // CreateUser creates a new user.
-func (r *Repository) CreateUser(ctx context.Context, username, displayName string) (*models.User, error) {
+func (r *Repository) CreateUser(ctx context.Context, username string) (*models.User, error) {
 	user := &models.User{
-		Username:    username,
-		DisplayName: displayName,
+		Username: username,
 	}
 	if err := r.db.WithContext(ctx).Create(user).Error; err != nil {
 		return nil, err
@@ -50,11 +49,10 @@ func (r *Repository) UserExists(ctx context.Context, username string) (bool, err
 
 // CreateUserWithEmail creates a new user with email as the primary identifier.
 // Username is set to the email address.
-func (r *Repository) CreateUserWithEmail(ctx context.Context, email, displayName string) (*models.User, error) {
+func (r *Repository) CreateUserWithEmail(ctx context.Context, email string) (*models.User, error) {
 	user := &models.User{
-		Username:    email, // Use email as username for WebAuthn compatibility
-		DisplayName: displayName,
-		Email:       &email,
+		Username: email, // Use email as username for WebAuthn compatibility
+		Email:    &email,
 	}
 	if err := r.db.WithContext(ctx).Create(user).Error; err != nil {
 		return nil, err

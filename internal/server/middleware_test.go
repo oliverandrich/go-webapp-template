@@ -145,7 +145,7 @@ func TestAuthMiddleware_NoSession(t *testing.T) {
 func TestAuthMiddleware_WithSession(t *testing.T) {
 	db := testutil.NewTestDB(t)
 	repo := repository.New(db)
-	user := testutil.NewTestUser(t, db, "testuser", "Test User")
+	user := testutil.NewTestUser(t, db, "testuser")
 
 	sessMgr, err := session.NewManager(&config.SessionConfig{
 		CookieName: "_session",

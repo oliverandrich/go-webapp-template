@@ -36,9 +36,9 @@ func TestUser_WebAuthnName(t *testing.T) {
 }
 
 func TestUser_WebAuthnDisplayName(t *testing.T) {
-	user := &models.User{DisplayName: "Test User"}
+	user := &models.User{Username: "testuser"}
 
-	assert.Equal(t, "Test User", user.WebAuthnDisplayName())
+	assert.Equal(t, "testuser", user.WebAuthnDisplayName())
 }
 
 func TestUser_WebAuthnIcon(t *testing.T) {

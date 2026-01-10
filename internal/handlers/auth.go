@@ -59,9 +59,8 @@ func (h *AuthHandlers) RegisterPage(c echo.Context) error {
 
 // RegisterBeginRequest is the request body for starting registration.
 type RegisterBeginRequest struct {
-	Username    string `json:"username"`
-	Email       string `json:"email"`
-	DisplayName string `json:"display_name"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
 }
 
 // RegisterBegin starts the WebAuthn registration process.
@@ -81,11 +80,6 @@ func (h *AuthHandlers) RegisterBegin(c echo.Context) error {
 			return c.JSON(http.StatusBadRequest, map[string]string{"error": "email is required"})
 		}
 
-		// Use email as display name if not provided
-		if req.DisplayName == "" {
-			req.DisplayName = req.Email
-		}
-
 		// Check if email already exists
 		exists, err := h.repo.EmailExists(ctx, req.Email)
 		if err != nil {
@@ -96,7 +90,7 @@ func (h *AuthHandlers) RegisterBegin(c echo.Context) error {
 		}
 
 		// Create user with email
-		user, createErr = h.repo.CreateUserWithEmail(ctx, req.Email, req.DisplayName)
+		user, createErr = h.repo.CreateUserWithEmail(ctx, req.Email)
 		if createErr != nil {
 			slog.Error("failed to create user", "error", createErr, "email", req.Email)
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to create user"})
@@ -105,11 +99,6 @@ func (h *AuthHandlers) RegisterBegin(c echo.Context) error {
 		// Username mode: original behavior
 		if req.Username == "" {
 			return c.JSON(http.StatusBadRequest, map[string]string{"error": "username is required"})
-		}
-
-		// Use username as display name if not provided
-		if req.DisplayName == "" {
-			req.DisplayName = req.Username
 		}
 
 		// Check if username already exists
@@ -122,7 +111,7 @@ func (h *AuthHandlers) RegisterBegin(c echo.Context) error {
 		}
 
 		// Create user in database
-		user, createErr = h.repo.CreateUser(ctx, req.Username, req.DisplayName)
+		user, createErr = h.repo.CreateUser(ctx, req.Username)
 		if createErr != nil {
 			slog.Error("failed to create user", "error", createErr, "username", req.Username)
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to create user"})

@@ -40,8 +40,7 @@ templ Dashboard() {
 						<div class="p-4 bg-white rounded-md border border-gray-200">
 							<p class="text-sm text-gray-500 mb-1">Logged in as</p>
 							if user := GetUser(ctx); user != nil {
-								<p class="font-medium text-gray-900">{ user.DisplayName }</p>
-								<p class="text-sm text-gray-500">{ "@" + user.Username }</p>
+								<p class="font-medium text-gray-900">{ user.Username }</p>
 							}
 						</div>
 
