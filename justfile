@@ -66,3 +66,7 @@ clean:
 # Tidy dependencies
 tidy:
     go mod tidy
+
+# Open SQLite database shell
+dbshell:
+    sqlite3 ./data/app.db
