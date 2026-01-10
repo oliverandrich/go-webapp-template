@@ -4,6 +4,7 @@
 package database
 
 import (
+	"database/sql"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	_ "modernc.org/sqlite" // Pure Go SQLite driver
 )
 
 // Open creates a new database connection with optimized SQLite settings.
@@ -31,10 +33,25 @@ func Open(dsn string) (*gorm.DB, error) {
 	// Add default SQLite parameters if not present
 	dsn = addDefaultParams(dsn)
 
-	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
+	// Open connection using modernc.org/sqlite (pure Go, no CGO)
+	sqlDB, err := sql.Open("sqlite", dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	// Configure connection pool
+	sqlDB.SetMaxOpenConns(10)
+	sqlDB.SetMaxIdleConns(5)
+	sqlDB.SetConnMaxLifetime(time.Hour)
+
+	// Use GORM's SQLite dialector with the existing connection
+	db, err := gorm.Open(sqlite.New(sqlite.Config{
+		Conn: sqlDB,
+	}), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
+		_ = sqlDB.Close()
 		return nil, err
 	}
 
@@ -43,34 +60,28 @@ func Open(dsn string) (*gorm.DB, error) {
 		return nil, configErr
 	}
 
-	// Configure connection pool
-	sqlDB, err := db.DB()
-	if err != nil {
-		return nil, err
-	}
-
-	sqlDB.SetMaxOpenConns(10)
-	sqlDB.SetMaxIdleConns(5)
-	sqlDB.SetConnMaxLifetime(time.Hour)
-
 	return db, nil
 }
 
 // addDefaultParams adds recommended SQLite parameters if not already present.
+// Uses modernc.org/sqlite pragma format: _pragma=name(value)
 func addDefaultParams(dsn string) string {
-	defaults := map[string]string{
-		"_txlock":       "immediate",
-		"_busy_timeout": "5000",
-		"_foreign_keys": "on",
+	// modernc.org/sqlite uses _pragma=name(value) format
+	defaults := []string{
+		"_pragma=busy_timeout(5000)",
+		"_pragma=foreign_keys(1)",
+		"_txlock=immediate",
 	}
 
-	for key, value := range defaults {
-		if !strings.Contains(dsn, key) {
+	for _, param := range defaults {
+		// Extract the pragma/param name for checking
+		paramName := strings.Split(param, "=")[0]
+		if !strings.Contains(dsn, paramName) {
 			separator := "?"
 			if strings.Contains(dsn, "?") {
 				separator = "&"
 			}
-			dsn += separator + key + "=" + value
+			dsn += separator + param
 		}
 	}
 

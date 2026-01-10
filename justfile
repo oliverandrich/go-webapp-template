@@ -1,5 +1,8 @@
 # Go Webapp Template - Development Tasks
 
+# Disable CGO for pure-Go builds (uses modernc.org/sqlite)
+export CGO_ENABLED := "0"
+
 # Default: list available recipes
 default:
     @just --list

@@ -5,6 +5,7 @@
 package testutil
 
 import (
+	"database/sql"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -16,12 +17,20 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	_ "modernc.org/sqlite" // Pure Go SQLite driver
 )
 
 // NewTestDB creates an in-memory SQLite database for tests.
 func NewTestDB(t *testing.T) *gorm.DB {
 	t.Helper()
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
+
+	// Use modernc.org/sqlite (pure Go, no CGO)
+	sqlDB, err := sql.Open("sqlite", ":memory:")
+	require.NoError(t, err)
+
+	db, err := gorm.Open(sqlite.New(sqlite.Config{
+		Conn: sqlDB,
+	}), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	require.NoError(t, err)
