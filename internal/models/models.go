@@ -9,5 +9,6 @@ func AllModels() []any {
 		&User{},
 		&Credential{},
 		&RecoveryCode{},
+		&EmailVerificationToken{},
 	}
 }

@@ -21,6 +21,23 @@ type Config struct { //nolint:govet // fieldalignment not critical for config st
 	TLS      TLSConfig
 	WebAuthn WebAuthnConfig
 	Session  SessionConfig
+	Auth     AuthConfig
+	SMTP     SMTPConfig
+}
+
+type AuthConfig struct {
+	UseEmail            bool // Use email instead of username for authentication
+	RequireVerification bool // Require email verification before login (default: true when UseEmail)
+}
+
+type SMTPConfig struct { //nolint:govet // fieldalignment not critical
+	Host     string // SMTP server host
+	Port     int    // SMTP port (25, 465, 587)
+	Username string // SMTP username
+	Password string // SMTP password
+	From     string // Sender email address
+	FromName string // Sender name
+	TLS      bool   // Enable TLS (auto-detects implicit TLS on port 465, STARTTLS otherwise)
 }
 
 type TLSConfig struct {
@@ -92,6 +109,19 @@ func NewFromCLI(cmd *cli.Command) *Config {
 			MaxAge:     int(cmd.Int("session-max-age")),
 			HashKey:    cmd.String("session-hash-key"),
 			BlockKey:   cmd.String("session-block-key"),
+		},
+		Auth: AuthConfig{
+			UseEmail:            cmd.Bool("auth-use-email"),
+			RequireVerification: cmd.Bool("auth-require-verification"),
+		},
+		SMTP: SMTPConfig{
+			Host:     cmd.String("smtp-host"),
+			Port:     int(cmd.Int("smtp-port")),
+			Username: cmd.String("smtp-username"),
+			Password: cmd.String("smtp-password"),
+			From:     cmd.String("smtp-from"),
+			FromName: cmd.String("smtp-from-name"),
+			TLS:      cmd.Bool("smtp-tls"),
 		},
 	}
 
@@ -276,6 +306,56 @@ func Flags() []cli.Flag {
 			Name:    "session-block-key",
 			Usage:   "Session block key for encryption (32-byte hex, optional)",
 			Sources: cli.NewValueSourceChain(cli.EnvVar("SESSION_BLOCK_KEY"), toml.TOML("session.block_key", configFile)),
+		},
+		// Auth flags
+		&cli.BoolFlag{
+			Name:    "auth-use-email",
+			Usage:   "Use email instead of username for authentication",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("AUTH_USE_EMAIL"), toml.TOML("auth.use_email", configFile)),
+		},
+		&cli.BoolFlag{
+			Name:    "auth-require-verification",
+			Value:   true,
+			Usage:   "Require email verification before login (only when auth-use-email is enabled)",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("AUTH_REQUIRE_VERIFICATION"), toml.TOML("auth.require_verification", configFile)),
+		},
+		// SMTP flags
+		&cli.StringFlag{
+			Name:    "smtp-host",
+			Usage:   "SMTP server host",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("SMTP_HOST"), toml.TOML("smtp.host", configFile)),
+		},
+		&cli.IntFlag{
+			Name:    "smtp-port",
+			Value:   587,
+			Usage:   "SMTP server port (25, 465, 587)",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("SMTP_PORT"), toml.TOML("smtp.port", configFile)),
+		},
+		&cli.StringFlag{
+			Name:    "smtp-username",
+			Usage:   "SMTP username",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("SMTP_USERNAME"), toml.TOML("smtp.username", configFile)),
+		},
+		&cli.StringFlag{
+			Name:    "smtp-password",
+			Usage:   "SMTP password",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("SMTP_PASSWORD"), toml.TOML("smtp.password", configFile)),
+		},
+		&cli.StringFlag{
+			Name:    "smtp-from",
+			Usage:   "Sender email address",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("SMTP_FROM"), toml.TOML("smtp.from", configFile)),
+		},
+		&cli.StringFlag{
+			Name:    "smtp-from-name",
+			Usage:   "Sender display name",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("SMTP_FROM_NAME"), toml.TOML("smtp.from_name", configFile)),
+		},
+		&cli.BoolFlag{
+			Name:    "smtp-tls",
+			Value:   true,
+			Usage:   "Enable TLS for SMTP (auto-detects implicit TLS on port 465, STARTTLS otherwise)",
+			Sources: cli.NewValueSourceChain(cli.EnvVar("SMTP_TLS"), toml.TOML("smtp.tls", configFile)),
 		},
 	}
 }

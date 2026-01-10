@@ -1,0 +1,31 @@
+package auth
+
+import "codeberg.org/oliverandrich/go-webapp-template/internal/templates"
+
+templ VerifySuccess() {
+	@templates.Layout(templates.T(ctx, "verify_success_title")) {
+		<main class="min-h-screen flex items-center justify-center px-4 py-12">
+			<div class="w-full max-w-md text-center">
+				<div class="bg-white rounded-md border border-gray-200 p-8">
+					<div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+						<svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+						</svg>
+					</div>
+					<h1 class="text-2xl font-bold text-gray-900 mb-2">
+						{ templates.T(ctx, "verify_success_heading") }
+					</h1>
+					<p class="text-gray-600 mb-6">
+						{ templates.T(ctx, "verify_success_description") }
+					</p>
+					<a
+						href="/dashboard"
+						class="inline-block px-6 py-2.5 font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-md"
+					>
+						{ templates.T(ctx, "continue_to_dashboard") }
+					</a>
+				</div>
+			</div>
+		</main>
+	}
+}

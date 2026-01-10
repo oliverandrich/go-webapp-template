@@ -56,3 +56,30 @@ recovery_codes_copy = "Kopieren"
 recovery_codes_download = "Herunterladen"
 recovery_codes_continue = "Ich habe meine Codes gespeichert"
 recovery_codes_warning = "Diese Codes werden nur einmal angezeigt. Speichere sie jetzt!"
+
+# E-Mail-Authentifizierung
+email = "E-Mail"
+email_placeholder = "du@beispiel.de"
+
+# E-Mail-Verifizierung
+verify_pending_title = "E-Mail bestätigen"
+verify_pending_heading = "E-Mail prüfen"
+verify_pending_description = "Wir haben einen Bestätigungslink an deine E-Mail-Adresse gesendet. Bitte prüfe dein Postfach und klicke auf den Link, um dein Konto zu aktivieren."
+resend_verification = "Bestätigungsmail erneut senden"
+
+verify_success_title = "E-Mail bestätigt"
+verify_success_heading = "E-Mail bestätigt!"
+verify_success_description = "Deine E-Mail-Adresse wurde erfolgreich bestätigt. Du kannst jetzt auf dein Konto zugreifen."
+continue_to_dashboard = "Weiter zum Dashboard"
+
+verify_error_title = "Bestätigung fehlgeschlagen"
+verify_error_heading = "Bestätigung fehlgeschlagen"
+verify_error_missing_token = "Der Bestätigungslink ist ungültig. Bitte fordere eine neue Bestätigungsmail an."
+verify_error_invalid_token = "Der Bestätigungslink ist ungültig oder wurde bereits verwendet. Bitte fordere eine neue Bestätigungsmail an."
+verify_error_token_expired = "Der Bestätigungslink ist abgelaufen. Bitte fordere eine neue Bestätigungsmail an."
+verify_error_generic = "Bei der Bestätigung ist ein Fehler aufgetreten. Bitte versuche es erneut."
+try_again = "Neuen Link anfordern"
+
+# E-Mail-Vorlagen
+email_verification_subject = "Bestätige deine E-Mail-Adresse"
+email_verification_body = "Bitte klicke auf den folgenden Link, um deine E-Mail-Adresse zu bestätigen:\n\n{{.VerifyURL}}\n\nDieser Link ist 24 Stunden gültig.\n\nWenn du kein Konto erstellt hast, kannst du diese E-Mail ignorieren."

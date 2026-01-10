@@ -23,6 +23,7 @@ import (
 	"codeberg.org/oliverandrich/go-webapp-template/internal/i18n"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/services/email"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/services/session"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/services/webauthn"
 	"github.com/labstack/echo/v4"
@@ -77,6 +78,16 @@ func Run(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("failed to create webauthn service: %w", err)
 	}
 
+	// Email Service (optional, only if email auth is enabled)
+	var emailSvc *email.Service
+	if cfg.Auth.UseEmail {
+		emailSvc, err = email.NewService(&cfg.SMTP, cfg.Server.BaseURL)
+		if err != nil {
+			return fmt.Errorf("failed to create email service: %w", err)
+		}
+		slog.Info("email authentication enabled")
+	}
+
 	// Echo
 	e := echo.New()
 	e.HideBanner = true
@@ -95,15 +106,15 @@ func Run(ctx context.Context, cmd *cli.Command) error {
 	e.Use(AuthMiddleware(sessions, repo))
 
 	// Routes
-	setupRoutes(e, repo, wa, sessions)
+	setupRoutes(e, repo, wa, sessions, emailSvc, &cfg.Auth)
 
 	// Start server
 	return startWithGracefulShutdown(e, cfg)
 }
 
-func setupRoutes(e *echo.Echo, repo *repository.Repository, wa *webauthn.Service, sessions *session.Manager) {
+func setupRoutes(e *echo.Echo, repo *repository.Repository, wa *webauthn.Service, sessions *session.Manager, emailSvc *email.Service, authCfg *config.AuthConfig) {
 	h := handlers.New(repo)
-	auth := handlers.NewAuth(repo, wa, sessions)
+	auth := handlers.NewAuth(repo, wa, sessions, emailSvc, authCfg)
 
 	// Static files
 	e.Static("/static", "static")
@@ -126,6 +137,11 @@ func setupRoutes(e *echo.Echo, repo *repository.Repository, wa *webauthn.Service
 	e.GET("/auth/recovery", auth.RecoveryPage)
 	e.POST("/auth/recovery", auth.RecoveryLogin)
 	e.GET("/auth/recovery-codes", auth.RecoveryCodesPage)
+
+	// Email verification routes (only functional when email auth is enabled)
+	e.GET("/auth/verify-email", auth.VerifyEmail)
+	e.GET("/auth/verify-pending", auth.VerifyPendingPage)
+	e.POST("/auth/resend-verification", auth.ResendVerification)
 
 	// Protected auth routes
 	protected := e.Group("/auth", RequireAuth())

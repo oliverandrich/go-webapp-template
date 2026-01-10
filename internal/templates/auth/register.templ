@@ -2,7 +2,7 @@ package auth
 
 import "codeberg.org/oliverandrich/go-webapp-template/internal/templates"
 
-templ Register() {
+templ Register(useEmailMode bool) {
 	@templates.Layout(templates.T(ctx, "register_title")) {
 		<main class="min-h-screen flex items-center justify-center px-4 py-12">
 			<div class="w-full max-w-sm">
@@ -16,22 +16,39 @@ templ Register() {
 				</div>
 
 				<div class="bg-white rounded-md border border-gray-200 p-6">
-					<form id="register-form" class="space-y-4">
+					<form id="register-form" class="space-y-4" data-use-email={ boolToString(useEmailMode) }>
 						<input type="hidden" name="csrf_token" value={ templates.CSRFToken(ctx) }/>
 
-						<div>
-							<label for="username" class="block text-sm font-medium text-gray-700 mb-1">
-								{ templates.T(ctx, "username") }
-							</label>
-							<input
-								type="text"
-								id="username"
-								name="username"
-								required
-								autocomplete="username"
-								class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-							/>
-						</div>
+						if useEmailMode {
+							<div>
+								<label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+									{ templates.T(ctx, "email") }
+								</label>
+								<input
+									type="email"
+									id="email"
+									name="email"
+									required
+									autocomplete="email"
+									placeholder={ templates.T(ctx, "email_placeholder") }
+									class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+								/>
+							</div>
+						} else {
+							<div>
+								<label for="username" class="block text-sm font-medium text-gray-700 mb-1">
+									{ templates.T(ctx, "username") }
+								</label>
+								<input
+									type="text"
+									id="username"
+									name="username"
+									required
+									autocomplete="username"
+									class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+								/>
+							</div>
+						}
 
 						<div>
 							<label for="display_name" class="block text-sm font-medium text-gray-700 mb-1">
@@ -70,6 +87,13 @@ templ Register() {
 	}
 }
 
+func boolToString(b bool) string {
+	if b {
+		return "true"
+	}
+	return "false"
+}
+
 templ registerScript() {
 	<script>
 		document.getElementById('register-form').addEventListener('submit', async (e) => {
@@ -77,12 +101,23 @@ templ registerScript() {
 			const errorDiv = document.getElementById('error-message');
 			errorDiv.classList.add('hidden');
 
+			const form = e.target;
+			const useEmail = form.dataset.useEmail === 'true';
 			const csrf = document.querySelector('input[name="csrf_token"]').value;
-			const username = document.getElementById('username').value;
-			const displayName = document.getElementById('display_name').value || username;
+
+			let payload;
+			if (useEmail) {
+				const email = document.getElementById('email').value;
+				const displayName = document.getElementById('display_name').value || email;
+				payload = { email, display_name: displayName };
+			} else {
+				const username = document.getElementById('username').value;
+				const displayName = document.getElementById('display_name').value || username;
+				payload = { username, display_name: displayName };
+			}
 
 			try {
-				const { publicKey, user_id } = await WebAuthn.post('/auth/register/begin', csrf, { username, display_name: displayName });
+				const { publicKey, user_id } = await WebAuthn.post('/auth/register/begin', csrf, payload);
 				const credential = await navigator.credentials.create({ publicKey: WebAuthn.prepareCreate(publicKey) });
 				const result = await WebAuthn.post('/auth/register/finish?user_id=' + user_id, csrf, WebAuthn.formatCreateResponse(credential));
 

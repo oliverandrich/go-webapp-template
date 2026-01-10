@@ -56,7 +56,8 @@ func newTestAuthHandlers(t *testing.T) (*handlers.AuthHandlers, *repository.Repo
 	}, false)
 	require.NoError(t, err)
 
-	h := handlers.NewAuth(repo, waSvc, sessMgr)
+	// Use nil email service and default auth config (username mode)
+	h := handlers.NewAuth(repo, waSvc, sessMgr, nil, &config.AuthConfig{UseEmail: false})
 	return h, repo
 }
 
@@ -546,4 +547,202 @@ func TestCredentialsPage_NoCredentials(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
 	assert.Contains(t, rec.Body.String(), "<!doctype html>")
+}
+
+// Email mode tests
+
+func newTestEmailAuthHandlers(t *testing.T) (*handlers.AuthHandlers, *repository.Repository) {
+	t.Helper()
+	db := testutil.NewTestDB(t)
+	repo := repository.New(db)
+
+	waSvc, err := webauthn.NewService(&config.WebAuthnConfig{
+		RPID:          "localhost",
+		RPOrigin:      "http://localhost:8080",
+		RPDisplayName: "Test App",
+	})
+	require.NoError(t, err)
+
+	sessMgr, err := session.NewManager(&config.SessionConfig{
+		CookieName: "_test_session",
+		MaxAge:     3600,
+		HashKey:    testHashKey,
+	}, false)
+	require.NoError(t, err)
+
+	// Email mode enabled, but without email service (for unit testing handlers)
+	h := handlers.NewAuth(repo, waSvc, sessMgr, nil, &config.AuthConfig{
+		UseEmail:            true,
+		RequireVerification: true,
+	})
+	return h, repo
+}
+
+func TestUseEmailMode_Enabled(t *testing.T) {
+	h, _ := newTestEmailAuthHandlers(t)
+	assert.True(t, h.UseEmailMode())
+}
+
+func TestUseEmailMode_Disabled(t *testing.T) {
+	h, _ := newTestAuthHandlers(t)
+	assert.False(t, h.UseEmailMode())
+}
+
+func TestRegisterBegin_EmailMode_Success(t *testing.T) {
+	h, _ := newTestEmailAuthHandlers(t)
+
+	e := echo.New()
+	body := strings.NewReader(`{"email":"test@example.com","display_name":"Test User"}`)
+	req := httptest.NewRequest(http.MethodPost, "/auth/register/begin", body)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	err := h.RegisterBegin(c)
+
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Contains(t, rec.Body.String(), "publicKey")
+	assert.Contains(t, rec.Body.String(), "user_id")
+}
+
+func TestRegisterBegin_EmailMode_MissingEmail(t *testing.T) {
+	h, _ := newTestEmailAuthHandlers(t)
+
+	e := echo.New()
+	body := strings.NewReader(`{"email":"","display_name":"Test"}`)
+	req := httptest.NewRequest(http.MethodPost, "/auth/register/begin", body)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	err := h.RegisterBegin(c)
+
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Contains(t, rec.Body.String(), "email is required")
+}
+
+func TestRegisterBegin_EmailMode_EmailExists(t *testing.T) {
+	h, repo := newTestEmailAuthHandlers(t)
+
+	// Create existing user with email
+	_, err := repo.CreateUserWithEmail(context.Background(), "existing@example.com", "Existing User")
+	require.NoError(t, err)
+
+	e := echo.New()
+	body := strings.NewReader(`{"email":"existing@example.com","display_name":"Test"}`)
+	req := httptest.NewRequest(http.MethodPost, "/auth/register/begin", body)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	err = h.RegisterBegin(c)
+
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusConflict, rec.Code)
+	assert.Contains(t, rec.Body.String(), "email already registered")
+}
+
+func TestRegisterBegin_EmailMode_DefaultDisplayName(t *testing.T) {
+	h, _ := newTestEmailAuthHandlers(t)
+
+	e := echo.New()
+	// Only provide email, display_name should default to email
+	body := strings.NewReader(`{"email":"test@example.com"}`)
+	req := httptest.NewRequest(http.MethodPost, "/auth/register/begin", body)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	err := h.RegisterBegin(c)
+
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Contains(t, rec.Body.String(), "publicKey")
+}
+
+func TestVerifyPendingPage(t *testing.T) {
+	h, _ := newTestEmailAuthHandlers(t)
+
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/auth/verify-pending", nil)
+	ctx := i18n.WithLocale(req.Context(), language.English)
+	req = req.WithContext(ctx)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	err := h.VerifyPendingPage(c)
+
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Contains(t, rec.Body.String(), "<!doctype html>")
+}
+
+func TestVerifyEmail_MissingToken(t *testing.T) {
+	h, _ := newTestEmailAuthHandlers(t)
+
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/auth/verify-email", nil)
+	ctx := i18n.WithLocale(req.Context(), language.English)
+	req = req.WithContext(ctx)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	err := h.VerifyEmail(c)
+
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Contains(t, rec.Body.String(), "<!doctype html>")
+}
+
+func TestVerifyEmail_InvalidToken(t *testing.T) {
+	h, _ := newTestEmailAuthHandlers(t)
+
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/auth/verify-email?token=invalid", nil)
+	ctx := i18n.WithLocale(req.Context(), language.English)
+	req = req.WithContext(ctx)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	err := h.VerifyEmail(c)
+
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Contains(t, rec.Body.String(), "<!doctype html>")
+}
+
+func TestResendVerification_MissingEmail(t *testing.T) {
+	h, _ := newTestEmailAuthHandlers(t)
+
+	e := echo.New()
+	body := strings.NewReader(`{"email":""}`)
+	req := httptest.NewRequest(http.MethodPost, "/auth/resend-verification", body)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	err := h.ResendVerification(c)
+
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Contains(t, rec.Body.String(), "email is required")
+}
+
+func TestResendVerification_NonexistentEmail(t *testing.T) {
+	h, _ := newTestEmailAuthHandlers(t)
+
+	e := echo.New()
+	// Non-existent email should still return OK (don't reveal if email exists)
+	body := strings.NewReader(`{"email":"nonexistent@example.com"}`)
+	req := httptest.NewRequest(http.MethodPost, "/auth/resend-verification", body)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	err := h.ResendVerification(c)
+
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
 }

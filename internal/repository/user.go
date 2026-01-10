@@ -47,3 +47,45 @@ func (r *Repository) UserExists(ctx context.Context, username string) (bool, err
 	}
 	return count > 0, nil
 }
+
+// CreateUserWithEmail creates a new user with email as the primary identifier.
+// Username is set to the email address.
+func (r *Repository) CreateUserWithEmail(ctx context.Context, email, displayName string) (*models.User, error) {
+	user := &models.User{
+		Username:    email, // Use email as username for WebAuthn compatibility
+		DisplayName: displayName,
+		Email:       &email,
+	}
+	if err := r.db.WithContext(ctx).Create(user).Error; err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+// GetUserByEmail retrieves a user by email with preloaded credentials.
+func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
+	var user models.User
+	if err := r.db.WithContext(ctx).Preload("Credentials").Where("email = ?", email).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// EmailExists checks if a user with the given email exists.
+func (r *Repository) EmailExists(ctx context.Context, email string) (bool, error) {
+	var count int64
+	if err := r.db.WithContext(ctx).Model(&models.User{}).Where("email = ?", email).Count(&count).Error; err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+// MarkEmailVerified marks a user's email as verified.
+func (r *Repository) MarkEmailVerified(ctx context.Context, userID int64) error {
+	return r.db.WithContext(ctx).Model(&models.User{}).
+		Where("id = ?", userID).
+		Updates(map[string]any{
+			"email_verified":    true,
+			"email_verified_at": r.db.NowFunc(),
+		}).Error
+}

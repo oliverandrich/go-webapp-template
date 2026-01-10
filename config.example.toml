@@ -34,3 +34,18 @@ cookie_name = "_session"   # Session cookie name
 max_age = 604800           # Session max age in seconds (7 days)
 hash_key = ""              # 32-byte hex string for HMAC signing (auto-generated in dev)
 block_key = ""             # 32-byte hex string for AES encryption (optional)
+
+# Authentication configuration
+[auth]
+use_email = false          # Use email instead of username for authentication
+require_verification = true  # Require email verification before login (when use_email is enabled)
+
+# SMTP configuration (required when auth.use_email is enabled)
+[smtp]
+host = ""                  # SMTP server host (e.g., "smtp.example.com")
+port = 587                 # SMTP port (25, 465 for implicit TLS, 587 for STARTTLS)
+username = ""              # SMTP username
+password = ""              # SMTP password
+from = ""                  # Sender email address (e.g., "noreply@example.com")
+from_name = ""             # Sender display name (e.g., "My App")
+tls = true                 # Enable TLS (auto-detects mode based on port: 465=implicit TLS, other=STARTTLS)

@@ -8,10 +8,13 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"time"
 
 	"codeberg.org/oliverandrich/go-webapp-template/internal/appcontext"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/config"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/services/email"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/services/recovery"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/services/session"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/services/webauthn"
@@ -27,26 +30,37 @@ type AuthHandlers struct {
 	webauthn *webauthn.Service
 	sessions *session.Manager
 	recovery *recovery.Service
+	email    *email.Service // nil if email mode is disabled
+	authCfg  *config.AuthConfig
 }
 
 // NewAuth creates a new AuthHandlers instance.
-func NewAuth(repo *repository.Repository, wa *webauthn.Service, sess *session.Manager) *AuthHandlers {
+// email service can be nil if email mode is disabled.
+func NewAuth(repo *repository.Repository, wa *webauthn.Service, sess *session.Manager, emailSvc *email.Service, authCfg *config.AuthConfig) *AuthHandlers {
 	return &AuthHandlers{
 		repo:     repo,
 		webauthn: wa,
 		sessions: sess,
 		recovery: recovery.NewService(),
+		email:    emailSvc,
+		authCfg:  authCfg,
 	}
+}
+
+// UseEmailMode returns true if email-based authentication is enabled.
+func (h *AuthHandlers) UseEmailMode() bool {
+	return h.authCfg != nil && h.authCfg.UseEmail
 }
 
 // RegisterPage renders the registration page.
 func (h *AuthHandlers) RegisterPage(c echo.Context) error {
-	return Render(c, http.StatusOK, authtpl.Register())
+	return Render(c, http.StatusOK, authtpl.Register(h.UseEmailMode()))
 }
 
 // RegisterBeginRequest is the request body for starting registration.
 type RegisterBeginRequest struct {
 	Username    string `json:"username"`
+	Email       string `json:"email"`
 	DisplayName string `json:"display_name"`
 }
 
@@ -57,29 +71,62 @@ func (h *AuthHandlers) RegisterBegin(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
 	}
 
-	if req.Username == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "username is required"})
-	}
+	var user *models.User
+	var createErr error
+	ctx := c.Request().Context()
 
-	// Use username as display name if not provided
-	if req.DisplayName == "" {
-		req.DisplayName = req.Username
-	}
+	if h.UseEmailMode() {
+		// Email mode: validate and create user with email
+		if req.Email == "" {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "email is required"})
+		}
 
-	// Check if username already exists
-	exists, err := h.repo.UserExists(c.Request().Context(), req.Username)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "database error"})
-	}
-	if exists {
-		return c.JSON(http.StatusConflict, map[string]string{"error": "username already taken"})
-	}
+		// Use email as display name if not provided
+		if req.DisplayName == "" {
+			req.DisplayName = req.Email
+		}
 
-	// Create user in database
-	user, err := h.repo.CreateUser(c.Request().Context(), req.Username, req.DisplayName)
-	if err != nil {
-		slog.Error("failed to create user", "error", err, "username", req.Username)
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to create user"})
+		// Check if email already exists
+		exists, err := h.repo.EmailExists(ctx, req.Email)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "database error"})
+		}
+		if exists {
+			return c.JSON(http.StatusConflict, map[string]string{"error": "email already registered"})
+		}
+
+		// Create user with email
+		user, createErr = h.repo.CreateUserWithEmail(ctx, req.Email, req.DisplayName)
+		if createErr != nil {
+			slog.Error("failed to create user", "error", createErr, "email", req.Email)
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to create user"})
+		}
+	} else {
+		// Username mode: original behavior
+		if req.Username == "" {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "username is required"})
+		}
+
+		// Use username as display name if not provided
+		if req.DisplayName == "" {
+			req.DisplayName = req.Username
+		}
+
+		// Check if username already exists
+		exists, err := h.repo.UserExists(ctx, req.Username)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "database error"})
+		}
+		if exists {
+			return c.JSON(http.StatusConflict, map[string]string{"error": "username already taken"})
+		}
+
+		// Create user in database
+		user, createErr = h.repo.CreateUser(ctx, req.Username, req.DisplayName)
+		if createErr != nil {
+			slog.Error("failed to create user", "error", createErr, "username", req.Username)
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to create user"})
+		}
 	}
 
 	// Begin WebAuthn registration
@@ -109,6 +156,8 @@ func (h *AuthHandlers) RegisterFinish(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid user_id"})
 	}
 
+	ctx := c.Request().Context()
+
 	// Get session data
 	sessionData, err := h.webauthn.GetRegistrationSession(userID)
 	if err != nil {
@@ -116,7 +165,7 @@ func (h *AuthHandlers) RegisterFinish(c echo.Context) error {
 	}
 
 	// Get user from database
-	user, err := h.repo.GetUserByID(c.Request().Context(), userID)
+	user, err := h.repo.GetUserByID(ctx, userID)
 	if err != nil {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "user not found"})
 	}
@@ -140,7 +189,7 @@ func (h *AuthHandlers) RegisterFinish(c echo.Context) error {
 		BackupState:     credential.Flags.BackupState,
 		AttestationType: credential.AttestationType,
 	}
-	if createErr := h.repo.CreateCredential(c.Request().Context(), dbCred); createErr != nil {
+	if createErr := h.repo.CreateCredential(ctx, dbCred); createErr != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to store credential"})
 	}
 
@@ -152,12 +201,48 @@ func (h *AuthHandlers) RegisterFinish(c echo.Context) error {
 	}
 
 	// Store recovery codes
-	if createErr := h.repo.CreateRecoveryCodes(c.Request().Context(), user.ID, hashes); createErr != nil {
+	if createErr := h.repo.CreateRecoveryCodes(ctx, user.ID, hashes); createErr != nil {
 		slog.Error("failed to store recovery codes", "error", createErr)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to store recovery codes"})
 	}
 
-	// Create session cookie
+	// Email mode: send verification email and redirect to pending page
+	if h.UseEmailMode() && user.Email != nil && h.authCfg.RequireVerification {
+		// Generate verification token
+		plainToken, tokenHash, expiresAt, tokenErr := h.email.GenerateToken()
+		if tokenErr != nil {
+			slog.Error("failed to generate verification token", "error", tokenErr)
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to generate verification token"})
+		}
+
+		// Store token
+		if tokenErr = h.repo.CreateEmailVerificationToken(ctx, user.ID, tokenHash, expiresAt); tokenErr != nil {
+			slog.Error("failed to store verification token", "error", tokenErr)
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to store verification token"})
+		}
+
+		// Send verification email (async)
+		go func() {
+			if sendErr := h.email.SendVerification(ctx, *user.Email, plainToken); sendErr != nil {
+				slog.Error("failed to send verification email", "error", sendErr, "email", *user.Email)
+			}
+		}()
+
+		// Store codes in flash cookie for later display after verification
+		flashCookie, flashErr := h.sessions.SetFlash(&session.FlashData{RecoveryCodes: codes})
+		if flashErr != nil {
+			slog.Error("failed to create flash cookie", "error", flashErr)
+		} else {
+			c.SetCookie(flashCookie)
+		}
+
+		return c.JSON(http.StatusOK, map[string]any{
+			"status":   "ok",
+			"redirect": "/auth/verify-pending",
+		})
+	}
+
+	// Username mode or email already verified: create session immediately
 	sessionCookie, err := h.sessions.Create(user.ID, user.Username)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to create session"})
@@ -246,6 +331,14 @@ func (h *AuthHandlers) LoginFinish(c echo.Context) error {
 
 	// Update sign count
 	_ = h.repo.UpdateCredentialSignCount(c.Request().Context(), credential.ID, credential.Authenticator.SignCount)
+
+	// Check email verification in email mode
+	if h.UseEmailMode() && h.authCfg.RequireVerification && !foundUser.EmailVerified {
+		return c.JSON(http.StatusForbidden, map[string]any{
+			"error":    "email_not_verified",
+			"redirect": "/auth/verify-pending",
+		})
+	}
 
 	// Create session cookie
 	cookie, err := h.sessions.Create(foundUser.ID, foundUser.Username)
@@ -480,4 +573,118 @@ func (h *AuthHandlers) RecoveryCodesPage(c echo.Context) error {
 	c.SetCookie(h.sessions.ClearFlash())
 
 	return Render(c, http.StatusOK, authtpl.RecoveryCodes(flash.RecoveryCodes))
+}
+
+// VerifyPendingPage renders the "check your email" page.
+func (h *AuthHandlers) VerifyPendingPage(c echo.Context) error {
+	return Render(c, http.StatusOK, authtpl.VerifyPending())
+}
+
+// VerifyEmail handles the email verification link.
+func (h *AuthHandlers) VerifyEmail(c echo.Context) error {
+	token := c.QueryParam("token")
+	if token == "" {
+		return Render(c, http.StatusBadRequest, authtpl.VerifyError("missing_token"))
+	}
+
+	ctx := c.Request().Context()
+
+	// Hash the token to look it up
+	tokenHash := email.HashToken(token)
+
+	// Find the token
+	verificationToken, err := h.repo.GetEmailVerificationToken(ctx, tokenHash)
+	if err != nil {
+		slog.Error("verification token not found", "error", err)
+		return Render(c, http.StatusBadRequest, authtpl.VerifyError("invalid_token"))
+	}
+
+	// Check if token is expired
+	if time.Now().After(verificationToken.ExpiresAt) {
+		// Delete expired token
+		_ = h.repo.DeleteEmailVerificationToken(ctx, verificationToken.ID)
+		return Render(c, http.StatusBadRequest, authtpl.VerifyError("token_expired"))
+	}
+
+	// Mark email as verified
+	if markErr := h.repo.MarkEmailVerified(ctx, verificationToken.UserID); markErr != nil {
+		slog.Error("failed to mark email as verified", "error", markErr)
+		return Render(c, http.StatusInternalServerError, authtpl.VerifyError("verification_failed"))
+	}
+
+	// Delete all verification tokens for this user
+	_ = h.repo.DeleteUserEmailVerificationTokens(ctx, verificationToken.UserID)
+
+	// Get user for session creation
+	user, err := h.repo.GetUserByID(ctx, verificationToken.UserID)
+	if err != nil {
+		slog.Error("failed to get user after verification", "error", err)
+		return Render(c, http.StatusInternalServerError, authtpl.VerifyError("verification_failed"))
+	}
+
+	// Create session
+	sessionCookie, err := h.sessions.Create(user.ID, user.Username)
+	if err != nil {
+		slog.Error("failed to create session after verification", "error", err)
+		return Render(c, http.StatusInternalServerError, authtpl.VerifyError("verification_failed"))
+	}
+	c.SetCookie(sessionCookie)
+
+	return Render(c, http.StatusOK, authtpl.VerifySuccess())
+}
+
+// ResendVerificationRequest is the request body for resending verification email.
+type ResendVerificationRequest struct {
+	Email string `json:"email" form:"email"`
+}
+
+// ResendVerification resends the verification email.
+func (h *AuthHandlers) ResendVerification(c echo.Context) error {
+	var req ResendVerificationRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
+	}
+
+	if req.Email == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "email is required"})
+	}
+
+	ctx := c.Request().Context()
+
+	// Find user by email
+	user, err := h.repo.GetUserByEmail(ctx, req.Email)
+	if err != nil {
+		// Don't reveal if email exists
+		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
+	}
+
+	// Check if already verified
+	if user.EmailVerified {
+		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
+	}
+
+	// Delete existing tokens for this user
+	_ = h.repo.DeleteUserEmailVerificationTokens(ctx, user.ID)
+
+	// Generate new verification token
+	plainToken, tokenHash, expiresAt, tokenErr := h.email.GenerateToken()
+	if tokenErr != nil {
+		slog.Error("failed to generate verification token", "error", tokenErr)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to send verification email"})
+	}
+
+	// Store token
+	if tokenErr = h.repo.CreateEmailVerificationToken(ctx, user.ID, tokenHash, expiresAt); tokenErr != nil {
+		slog.Error("failed to store verification token", "error", tokenErr)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to send verification email"})
+	}
+
+	// Send verification email (async)
+	go func() {
+		if sendErr := h.email.SendVerification(ctx, *user.Email, plainToken); sendErr != nil {
+			slog.Error("failed to send verification email", "error", sendErr, "email", *user.Email)
+		}
+	}()
+
+	return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 }
