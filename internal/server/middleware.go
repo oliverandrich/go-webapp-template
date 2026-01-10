@@ -21,6 +21,7 @@ import (
 )
 
 func setupMiddleware(e *echo.Echo, cfg *config.Config, assets *appcontext.Assets) {
+	e.Pre(middleware.RemoveTrailingSlash())
 	e.Use(middleware.Recover())
 	e.Use(middleware.RequestID())
 	e.Use(requestLogger())
