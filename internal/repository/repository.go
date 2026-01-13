@@ -1,23 +1,19 @@
 // Copyright 2025 Oliver Andrich
 // Licensed under the EUPL-1.2
 
+// Package repository provides data access using sqlx with direct model mapping.
 package repository
 
 import (
-	"gorm.io/gorm"
+	"github.com/vinovest/sqlx"
 )
 
 // Repository provides data access methods.
 type Repository struct {
-	db *gorm.DB
+	db *sqlx.DB
 }
 
 // New creates a new Repository.
-func New(db *gorm.DB) *Repository {
+func New(db *sqlx.DB) *Repository {
 	return &Repository{db: db}
-}
-
-// DB returns the underlying database connection.
-func (r *Repository) DB() *gorm.DB {
-	return r.db
 }

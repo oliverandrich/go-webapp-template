@@ -85,9 +85,3 @@ func TestTransportsFromWebAuthn_Single(t *testing.T) {
 
 	assert.Equal(t, "internal", result)
 }
-
-func TestAllModels(t *testing.T) {
-	allModels := models.AllModels()
-
-	assert.Len(t, allModels, 4) // User, Credential, RecoveryCode, EmailVerificationToken
-}

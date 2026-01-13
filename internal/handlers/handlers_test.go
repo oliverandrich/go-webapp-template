@@ -10,7 +10,6 @@ import (
 
 	"codeberg.org/oliverandrich/go-webapp-template/internal/handlers"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/i18n"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/testutil"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -24,8 +23,7 @@ func init() {
 }
 
 func TestNew(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 
 	h := handlers.New(repo)
 
@@ -48,8 +46,7 @@ func TestHealth(t *testing.T) {
 }
 
 func TestHome(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	h := handlers.New(repo)
 
 	e := echo.New()
@@ -68,8 +65,7 @@ func TestHome(t *testing.T) {
 }
 
 func TestDashboard(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	h := handlers.New(repo)
 
 	e := echo.New()

@@ -5,34 +5,67 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
 )
 
-// CreateUser creates a new user.
+// CreateUser creates a new user with only a username.
 func (r *Repository) CreateUser(ctx context.Context, username string) (*models.User, error) {
-	user := &models.User{
-		Username: username,
-	}
-	if err := r.db.WithContext(ctx).Create(user).Error; err != nil {
+	result, err := r.db.ExecContext(ctx,
+		`INSERT INTO users (username) VALUES (?)`,
+		username)
+	if err != nil {
 		return nil, err
 	}
-	return user, nil
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	return r.GetUserByID(ctx, id)
 }
 
-// GetUserByID retrieves a user by ID with preloaded credentials.
+// CreateUserWithEmail creates a new user with email.
+func (r *Repository) CreateUserWithEmail(ctx context.Context, email string) (*models.User, error) {
+	result, err := r.db.ExecContext(ctx,
+		`INSERT INTO users (username, email) VALUES (?, ?)`,
+		email, email)
+	if err != nil {
+		return nil, err
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	return r.GetUserByID(ctx, id)
+}
+
+// GetUserByID retrieves a user by ID.
 func (r *Repository) GetUserByID(ctx context.Context, id int64) (*models.User, error) {
 	var user models.User
-	if err := r.db.WithContext(ctx).Preload("Credentials").First(&user, id).Error; err != nil {
+	err := r.db.GetContext(ctx, &user, `SELECT * FROM users WHERE id = ?`, id)
+	if err != nil {
 		return nil, err
 	}
 	return &user, nil
 }
 
-// GetUserByUsername retrieves a user by username with preloaded credentials.
+// GetUserByUsername retrieves a user by username.
 func (r *Repository) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
 	var user models.User
-	if err := r.db.WithContext(ctx).Preload("Credentials").Where("username = ?", username).First(&user).Error; err != nil {
+	err := r.db.GetContext(ctx, &user, `SELECT * FROM users WHERE username = ?`, username)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// GetUserByEmail retrieves a user by email.
+func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
+	var user models.User
+	err := r.db.GetContext(ctx, &user, `SELECT * FROM users WHERE email = ?`, email)
+	if err != nil {
 		return nil, err
 	}
 	return &user, nil
@@ -40,50 +73,25 @@ func (r *Repository) GetUserByUsername(ctx context.Context, username string) (*m
 
 // UserExists checks if a user with the given username exists.
 func (r *Repository) UserExists(ctx context.Context, username string) (bool, error) {
-	var count int64
-	if err := r.db.WithContext(ctx).Model(&models.User{}).Where("username = ?", username).Count(&count).Error; err != nil {
-		return false, err
-	}
-	return count > 0, nil
-}
-
-// CreateUserWithEmail creates a new user with email as the primary identifier.
-// Username is set to the email address.
-func (r *Repository) CreateUserWithEmail(ctx context.Context, email string) (*models.User, error) {
-	user := &models.User{
-		Username: email, // Use email as username for WebAuthn compatibility
-		Email:    &email,
-	}
-	if err := r.db.WithContext(ctx).Create(user).Error; err != nil {
-		return nil, err
-	}
-	return user, nil
-}
-
-// GetUserByEmail retrieves a user by email with preloaded credentials.
-func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
-	var user models.User
-	if err := r.db.WithContext(ctx).Preload("Credentials").Where("email = ?", email).First(&user).Error; err != nil {
-		return nil, err
-	}
-	return &user, nil
+	var exists bool
+	err := r.db.GetContext(ctx, &exists, `SELECT EXISTS(SELECT 1 FROM users WHERE username = ?)`, username)
+	return exists, err
 }
 
 // EmailExists checks if a user with the given email exists.
 func (r *Repository) EmailExists(ctx context.Context, email string) (bool, error) {
-	var count int64
-	if err := r.db.WithContext(ctx).Model(&models.User{}).Where("email = ?", email).Count(&count).Error; err != nil {
-		return false, err
+	var exists bool
+	err := r.db.GetContext(ctx, &exists, `SELECT EXISTS(SELECT 1 FROM users WHERE email = ?)`, email)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
 	}
-	return count > 0, nil
+	return exists, err
 }
 
 // MarkEmailVerified marks a user's email as verified.
 func (r *Repository) MarkEmailVerified(ctx context.Context, userID int64) error {
-	return r.db.WithContext(ctx).Model(&models.User{}).
-		Where("id = ?", userID).
-		Updates(map[string]any{
-			"email_verified":    true,
-			"email_verified_at": r.db.NowFunc(),
-		}).Error
+	_, err := r.db.ExecContext(ctx,
+		`UPDATE users SET email_verified = 1, email_verified_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+		userID)
+	return err
 }

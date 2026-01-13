@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"codeberg.org/oliverandrich/go-webapp-template/internal/database"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +18,7 @@ func TestOpen_InMemory(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, db)
 
-	err = database.Close(db)
+	err = db.Close()
 	require.NoError(t, err)
 }
 
@@ -38,24 +37,21 @@ func TestOpen_DefaultDSN(t *testing.T) {
 	require.NotNil(t, db)
 
 	defer func() {
-		_ = database.Close(db)
+		_ = db.Close()
 	}()
 }
 
-func TestMigrate(t *testing.T) {
+func TestOpen_MigrationsApplied(t *testing.T) {
 	db, err := database.Open(":memory:")
 	require.NoError(t, err)
 	defer func() {
-		_ = database.Close(db)
+		_ = db.Close()
 	}()
 
-	err = database.Migrate(db, &models.User{}, &models.Credential{})
-
-	require.NoError(t, err)
-
-	// Verify tables were created
+	// Verify tables were created by migrations
 	var count int64
-	db.Raw("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='users'").Scan(&count)
+	err = db.Get(&count, "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='users'")
+	require.NoError(t, err)
 	assert.Equal(t, int64(1), count)
 }
 
@@ -63,7 +59,7 @@ func TestClose(t *testing.T) {
 	db, err := database.Open(":memory:")
 	require.NoError(t, err)
 
-	err = database.Close(db)
+	err = db.Close()
 
 	require.NoError(t, err)
 }
@@ -76,7 +72,7 @@ func TestOpen_WithExistingParams(t *testing.T) {
 	require.NotNil(t, db)
 
 	defer func() {
-		_ = database.Close(db)
+		_ = db.Close()
 	}()
 }
 
@@ -84,18 +80,20 @@ func TestOpen_PragmasApplied(t *testing.T) {
 	db, err := database.Open(":memory:")
 	require.NoError(t, err)
 	defer func() {
-		_ = database.Close(db)
+		_ = db.Close()
 	}()
 
 	// Check that WAL mode is set
 	var journalMode string
-	db.Raw("PRAGMA journal_mode").Scan(&journalMode)
+	err = db.Get(&journalMode, "PRAGMA journal_mode")
+	require.NoError(t, err)
 	// In memory mode, WAL might not be applied, but this shouldn't error
 	assert.NotEmpty(t, journalMode)
 
 	// Check synchronous setting
 	var synchronous int
-	db.Raw("PRAGMA synchronous").Scan(&synchronous)
+	err = db.Get(&synchronous, "PRAGMA synchronous")
+	require.NoError(t, err)
 	assert.NotZero(t, synchronous)
 }
 
@@ -107,12 +105,14 @@ func TestOpen_FileDatabase(t *testing.T) {
 	db, err := database.Open(dbPath)
 	require.NoError(t, err)
 	defer func() {
-		_ = database.Close(db)
+		_ = db.Close()
 	}()
 
-	// Verify database is usable
-	err = database.Migrate(db, &models.User{})
+	// Verify database is usable - tables should exist from migrations
+	var count int64
+	err = db.Get(&count, "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='users'")
 	require.NoError(t, err)
+	assert.Equal(t, int64(1), count)
 }
 
 func TestOpen_ModeMemory(t *testing.T) {
@@ -123,6 +123,6 @@ func TestOpen_ModeMemory(t *testing.T) {
 	require.NotNil(t, db)
 
 	defer func() {
-		_ = database.Close(db)
+		_ = db.Close()
 	}()
 }

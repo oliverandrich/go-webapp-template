@@ -5,22 +5,20 @@ package repository_test
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/gorm"
 )
 
 func TestCreateEmailVerificationToken(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser")
+	user := testutil.NewTestUser(t, repo, "testuser")
 	tokenHash := "abc123hash"
 	expiresAt := time.Now().Add(24 * time.Hour)
 
@@ -37,11 +35,10 @@ func TestCreateEmailVerificationToken(t *testing.T) {
 }
 
 func TestGetEmailVerificationToken(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser")
+	user := testutil.NewTestUser(t, repo, "testuser")
 	tokenHash := "abc123hash"
 	expiresAt := time.Now().Add(24 * time.Hour)
 
@@ -57,21 +54,19 @@ func TestGetEmailVerificationToken(t *testing.T) {
 }
 
 func TestGetEmailVerificationToken_NotFound(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	ctx := context.Background()
 
 	_, err := repo.GetEmailVerificationToken(ctx, "nonexistent")
 
-	assert.ErrorIs(t, err, gorm.ErrRecordNotFound)
+	assert.ErrorIs(t, err, sql.ErrNoRows)
 }
 
 func TestDeleteEmailVerificationToken(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser")
+	user := testutil.NewTestUser(t, repo, "testuser")
 	tokenHash := "abc123hash"
 	expiresAt := time.Now().Add(24 * time.Hour)
 
@@ -86,15 +81,14 @@ func TestDeleteEmailVerificationToken(t *testing.T) {
 
 	// Should not be found anymore
 	_, err = repo.GetEmailVerificationToken(ctx, tokenHash)
-	assert.ErrorIs(t, err, gorm.ErrRecordNotFound)
+	assert.ErrorIs(t, err, sql.ErrNoRows)
 }
 
 func TestDeleteUserEmailVerificationTokens(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser")
+	user := testutil.NewTestUser(t, repo, "testuser")
 	expiresAt := time.Now().Add(24 * time.Hour)
 
 	// Create multiple tokens for the user
@@ -108,18 +102,17 @@ func TestDeleteUserEmailVerificationTokens(t *testing.T) {
 
 	// Both should be deleted
 	_, err = repo.GetEmailVerificationToken(ctx, "token1")
-	require.ErrorIs(t, err, gorm.ErrRecordNotFound)
+	require.ErrorIs(t, err, sql.ErrNoRows)
 
 	_, err = repo.GetEmailVerificationToken(ctx, "token2")
-	require.ErrorIs(t, err, gorm.ErrRecordNotFound)
+	require.ErrorIs(t, err, sql.ErrNoRows)
 }
 
 func TestDeleteExpiredEmailVerificationTokens(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser")
+	user := testutil.NewTestUser(t, repo, "testuser")
 
 	// Create an expired token
 	expiredAt := time.Now().Add(-1 * time.Hour)
@@ -136,7 +129,7 @@ func TestDeleteExpiredEmailVerificationTokens(t *testing.T) {
 
 	// Expired should be deleted
 	_, err = repo.GetEmailVerificationToken(ctx, "expired")
-	require.ErrorIs(t, err, gorm.ErrRecordNotFound)
+	require.ErrorIs(t, err, sql.ErrNoRows)
 
 	// Valid should still exist
 	token, err := repo.GetEmailVerificationToken(ctx, "valid")
@@ -147,8 +140,7 @@ func TestDeleteExpiredEmailVerificationTokens(t *testing.T) {
 // Tests for email-related user methods
 
 func TestCreateUserWithEmail(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	ctx := context.Background()
 
 	user, err := repo.CreateUserWithEmail(ctx, "test@example.com")
@@ -162,8 +154,7 @@ func TestCreateUserWithEmail(t *testing.T) {
 }
 
 func TestCreateUserWithEmail_DuplicateEmail(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	ctx := context.Background()
 
 	_, err := repo.CreateUserWithEmail(ctx, "test@example.com")
@@ -175,8 +166,7 @@ func TestCreateUserWithEmail_DuplicateEmail(t *testing.T) {
 }
 
 func TestGetUserByEmail(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	ctx := context.Background()
 
 	created, err := repo.CreateUserWithEmail(ctx, "test@example.com")
@@ -191,18 +181,16 @@ func TestGetUserByEmail(t *testing.T) {
 }
 
 func TestGetUserByEmail_NotFound(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	ctx := context.Background()
 
 	_, err := repo.GetUserByEmail(ctx, "nonexistent@example.com")
 
-	assert.ErrorIs(t, err, gorm.ErrRecordNotFound)
+	assert.ErrorIs(t, err, sql.ErrNoRows)
 }
 
 func TestEmailExists(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	ctx := context.Background()
 
 	_, err := repo.CreateUserWithEmail(ctx, "test@example.com")
@@ -215,8 +203,7 @@ func TestEmailExists(t *testing.T) {
 }
 
 func TestEmailExists_NotFound(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	ctx := context.Background()
 
 	exists, err := repo.EmailExists(ctx, "nonexistent@example.com")
@@ -226,8 +213,7 @@ func TestEmailExists_NotFound(t *testing.T) {
 }
 
 func TestMarkEmailVerified(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	ctx := context.Background()
 
 	user, err := repo.CreateUserWithEmail(ctx, "test@example.com")

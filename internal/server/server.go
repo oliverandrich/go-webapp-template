@@ -21,7 +21,6 @@ import (
 	"codeberg.org/oliverandrich/go-webapp-template/internal/database"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/handlers"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/i18n"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/services/email"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/services/session"
@@ -41,21 +40,16 @@ func Run(ctx context.Context, cmd *cli.Command) error {
 		"base_url", cfg.Server.BaseURL,
 	)
 
-	// Database
+	// Database (migrations run automatically in Open)
 	db, err := database.Open(cfg.Database.DSN)
 	if err != nil {
 		return fmt.Errorf("failed to open database: %w", err)
 	}
 	defer func() {
-		if closeErr := database.Close(db); closeErr != nil {
+		if closeErr := db.Close(); closeErr != nil {
 			slog.Error("failed to close database", "error", closeErr)
 		}
 	}()
-
-	// Migrations
-	if migrateErr := database.Migrate(db, models.AllModels()...); migrateErr != nil {
-		return fmt.Errorf("failed to migrate database: %w", migrateErr)
-	}
 
 	// i18n
 	if initErr := i18n.Init(); initErr != nil {

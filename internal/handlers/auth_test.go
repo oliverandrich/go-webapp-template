@@ -39,8 +39,7 @@ const testHashKey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789a
 
 func newTestAuthHandlers(t *testing.T) (*handlers.AuthHandlers, *repository.Repository) {
 	t.Helper()
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 
 	waSvc, err := webauthn.NewService(&config.WebAuthnConfig{
 		RPID:          "localhost",
@@ -158,7 +157,7 @@ func TestRegisterFinish_SessionExpired(t *testing.T) {
 	h, repo := newTestAuthHandlers(t)
 
 	// Create user but don't store registration session
-	user := testutil.NewTestUser(t, repo.DB(), "testuser")
+	user := testutil.NewTestUser(t, repo, "testuser")
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodPost, "/auth/register/finish?user_id="+string(rune(user.ID+'0')), nil)
@@ -275,8 +274,8 @@ func TestCredentialsPage_Unauthenticated(t *testing.T) {
 func TestCredentialsPage_Authenticated(t *testing.T) {
 	h, repo := newTestAuthHandlers(t)
 
-	user := testutil.NewTestUser(t, repo.DB(), "testuser")
-	testutil.NewTestCredential(t, repo.DB(), user.ID, "cred-1")
+	user := testutil.NewTestUser(t, repo, "testuser")
+	testutil.NewTestCredential(t, repo, user.ID, "cred-1")
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/auth/credentials", nil)
@@ -310,7 +309,7 @@ func TestAddCredentialBegin_Unauthenticated(t *testing.T) {
 func TestAddCredentialBegin_Authenticated(t *testing.T) {
 	h, repo := newTestAuthHandlers(t)
 
-	user := testutil.NewTestUser(t, repo.DB(), "testuser")
+	user := testutil.NewTestUser(t, repo, "testuser")
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodPost, "/auth/credentials/begin", nil)
@@ -341,7 +340,7 @@ func TestAddCredentialFinish_Unauthenticated(t *testing.T) {
 func TestAddCredentialFinish_SessionExpired(t *testing.T) {
 	h, repo := newTestAuthHandlers(t)
 
-	user := testutil.NewTestUser(t, repo.DB(), "testuser")
+	user := testutil.NewTestUser(t, repo, "testuser")
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodPost, "/auth/credentials/finish", nil)
@@ -374,7 +373,7 @@ func TestDeleteCredential_Unauthenticated(t *testing.T) {
 func TestDeleteCredential_InvalidID(t *testing.T) {
 	h, repo := newTestAuthHandlers(t)
 
-	user := testutil.NewTestUser(t, repo.DB(), "testuser")
+	user := testutil.NewTestUser(t, repo, "testuser")
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodDelete, "/auth/credentials/invalid", nil)
@@ -393,8 +392,8 @@ func TestDeleteCredential_InvalidID(t *testing.T) {
 func TestDeleteCredential_LastCredential(t *testing.T) {
 	h, repo := newTestAuthHandlers(t)
 
-	user := testutil.NewTestUser(t, repo.DB(), "testuser")
-	cred := testutil.NewTestCredential(t, repo.DB(), user.ID, "only-cred")
+	user := testutil.NewTestUser(t, repo, "testuser")
+	cred := testutil.NewTestCredential(t, repo, user.ID, "only-cred")
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodDelete, "/auth/credentials/"+string(rune(cred.ID+'0')), nil)
@@ -413,9 +412,9 @@ func TestDeleteCredential_LastCredential(t *testing.T) {
 func TestDeleteCredential_Success(t *testing.T) {
 	h, repo := newTestAuthHandlers(t)
 
-	user := testutil.NewTestUser(t, repo.DB(), "testuser")
-	cred1 := testutil.NewTestCredential(t, repo.DB(), user.ID, "cred-1")
-	testutil.NewTestCredential(t, repo.DB(), user.ID, "cred-2")
+	user := testutil.NewTestUser(t, repo, "testuser")
+	cred1 := testutil.NewTestCredential(t, repo, user.ID, "cred-1")
+	testutil.NewTestCredential(t, repo, user.ID, "cred-2")
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodDelete, "/auth/credentials/1", nil)
@@ -514,7 +513,7 @@ func TestLoginFinish_EmptySessionID(t *testing.T) {
 func TestAddCredentialBegin_Success(t *testing.T) {
 	h, repo := newTestAuthHandlers(t)
 
-	user := testutil.NewTestUser(t, repo.DB(), "testuser")
+	user := testutil.NewTestUser(t, repo, "testuser")
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodPost, "/auth/credentials/begin", nil)
@@ -531,7 +530,7 @@ func TestAddCredentialBegin_Success(t *testing.T) {
 func TestCredentialsPage_NoCredentials(t *testing.T) {
 	h, repo := newTestAuthHandlers(t)
 
-	user := testutil.NewTestUser(t, repo.DB(), "testuser")
+	user := testutil.NewTestUser(t, repo, "testuser")
 	// Don't add any credentials
 
 	e := echo.New()
@@ -552,8 +551,7 @@ func TestCredentialsPage_NoCredentials(t *testing.T) {
 
 func newTestEmailAuthHandlers(t *testing.T) (*handlers.AuthHandlers, *repository.Repository) {
 	t.Helper()
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 
 	waSvc, err := webauthn.NewService(&config.WebAuthnConfig{
 		RPID:          "localhost",

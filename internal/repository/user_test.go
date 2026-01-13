@@ -5,18 +5,16 @@ package repository_test
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/gorm"
 )
 
 func TestCreateUser(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	ctx := context.Background()
 
 	user, err := repo.CreateUser(ctx, "testuser")
@@ -28,8 +26,7 @@ func TestCreateUser(t *testing.T) {
 }
 
 func TestCreateUser_DuplicateUsername(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	ctx := context.Background()
 
 	_, err := repo.CreateUser(ctx, "testuser")
@@ -41,8 +38,7 @@ func TestCreateUser_DuplicateUsername(t *testing.T) {
 }
 
 func TestGetUserByID(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	ctx := context.Background()
 
 	created, err := repo.CreateUser(ctx, "testuser")
@@ -56,33 +52,30 @@ func TestGetUserByID(t *testing.T) {
 }
 
 func TestGetUserByID_NotFound(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	ctx := context.Background()
 
 	_, err := repo.GetUserByID(ctx, 999)
 
-	assert.ErrorIs(t, err, gorm.ErrRecordNotFound)
+	assert.ErrorIs(t, err, sql.ErrNoRows)
 }
 
 func TestGetUserByID_WithCredentials(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	ctx := context.Background()
 
-	user := testutil.NewTestUser(t, db, "testuser")
-	testutil.NewTestCredential(t, db, user.ID, "credential-1")
-	testutil.NewTestCredential(t, db, user.ID, "credential-2")
+	user := testutil.NewTestUser(t, repo, "testuser")
+	testutil.NewTestCredential(t, repo, user.ID, "credential-1")
+	testutil.NewTestCredential(t, repo, user.ID, "credential-2")
 
-	retrieved, err := repo.GetUserByID(ctx, user.ID)
-
+	// With sqlx we need to load credentials separately
+	creds, err := repo.GetCredentialsByUserID(ctx, user.ID)
 	require.NoError(t, err)
-	assert.Len(t, retrieved.Credentials, 2)
+	assert.Len(t, creds, 2)
 }
 
 func TestGetUserByUsername(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	ctx := context.Background()
 
 	created, err := repo.CreateUser(ctx, "testuser")
@@ -95,18 +88,16 @@ func TestGetUserByUsername(t *testing.T) {
 }
 
 func TestGetUserByUsername_NotFound(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	ctx := context.Background()
 
 	_, err := repo.GetUserByUsername(ctx, "nonexistent")
 
-	assert.ErrorIs(t, err, gorm.ErrRecordNotFound)
+	assert.ErrorIs(t, err, sql.ErrNoRows)
 }
 
 func TestUserExists(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	ctx := context.Background()
 
 	_, err := repo.CreateUser(ctx, "testuser")
@@ -119,8 +110,7 @@ func TestUserExists(t *testing.T) {
 }
 
 func TestUserExists_NotFound(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	ctx := context.Background()
 
 	exists, err := repo.UserExists(ctx, "nonexistent")

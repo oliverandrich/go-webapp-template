@@ -12,39 +12,36 @@ import (
 
 // CreateEmailVerificationToken creates a new email verification token.
 func (r *Repository) CreateEmailVerificationToken(ctx context.Context, userID int64, tokenHash string, expiresAt time.Time) error {
-	token := &models.EmailVerificationToken{
-		UserID:    userID,
-		TokenHash: tokenHash,
-		ExpiresAt: expiresAt,
-	}
-	return r.db.WithContext(ctx).Create(token).Error
+	_, err := r.db.ExecContext(ctx,
+		`INSERT INTO email_verification_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)`,
+		userID, tokenHash, expiresAt)
+	return err
 }
 
-// GetEmailVerificationToken retrieves a verification token by its hash.
-// Returns ErrNotFound if the token doesn't exist.
+// GetEmailVerificationToken retrieves an email verification token by hash.
 func (r *Repository) GetEmailVerificationToken(ctx context.Context, tokenHash string) (*models.EmailVerificationToken, error) {
 	var token models.EmailVerificationToken
-	if err := r.db.WithContext(ctx).Where("token_hash = ?", tokenHash).First(&token).Error; err != nil {
+	err := r.db.GetContext(ctx, &token, `SELECT * FROM email_verification_tokens WHERE token_hash = ?`, tokenHash)
+	if err != nil {
 		return nil, err
 	}
 	return &token, nil
 }
 
-// DeleteEmailVerificationToken deletes a verification token by ID.
+// DeleteEmailVerificationToken deletes a token by ID.
 func (r *Repository) DeleteEmailVerificationToken(ctx context.Context, tokenID int64) error {
-	return r.db.WithContext(ctx).Delete(&models.EmailVerificationToken{}, tokenID).Error
+	_, err := r.db.ExecContext(ctx, `DELETE FROM email_verification_tokens WHERE id = ?`, tokenID)
+	return err
 }
 
-// DeleteExpiredEmailVerificationTokens removes all expired tokens.
-func (r *Repository) DeleteExpiredEmailVerificationTokens(ctx context.Context) error {
-	return r.db.WithContext(ctx).
-		Where("expires_at < ?", time.Now()).
-		Delete(&models.EmailVerificationToken{}).Error
-}
-
-// DeleteUserEmailVerificationTokens deletes all verification tokens for a user.
+// DeleteUserEmailVerificationTokens deletes all tokens for a user.
 func (r *Repository) DeleteUserEmailVerificationTokens(ctx context.Context, userID int64) error {
-	return r.db.WithContext(ctx).
-		Where("user_id = ?", userID).
-		Delete(&models.EmailVerificationToken{}).Error
+	_, err := r.db.ExecContext(ctx, `DELETE FROM email_verification_tokens WHERE user_id = ?`, userID)
+	return err
+}
+
+// DeleteExpiredEmailVerificationTokens deletes expired tokens.
+func (r *Repository) DeleteExpiredEmailVerificationTokens(ctx context.Context) error {
+	_, err := r.db.ExecContext(ctx, `DELETE FROM email_verification_tokens WHERE expires_at < ?`, time.Now())
+	return err
 }

@@ -1,0 +1,47 @@
+// Copyright 2025 Oliver Andrich
+// Licensed under the EUPL-1.2
+
+package database
+
+import (
+	"database/sql"
+	"embed"
+
+	"github.com/pressly/goose/v3"
+)
+
+//go:embed migrations/*.sql
+var embedMigrations embed.FS
+
+// RunMigrations runs all pending goose migrations.
+func RunMigrations(db *sql.DB) error {
+	goose.SetBaseFS(embedMigrations)
+
+	if err := goose.SetDialect("sqlite3"); err != nil {
+		return err
+	}
+
+	return goose.Up(db, "migrations")
+}
+
+// MigrateDown rolls back the last migration.
+func MigrateDown(db *sql.DB) error {
+	goose.SetBaseFS(embedMigrations)
+
+	if err := goose.SetDialect("sqlite3"); err != nil {
+		return err
+	}
+
+	return goose.Down(db, "migrations")
+}
+
+// MigrateReset rolls back all migrations.
+func MigrateReset(db *sql.DB) error {
+	goose.SetBaseFS(embedMigrations)
+
+	if err := goose.SetDialect("sqlite3"); err != nil {
+		return err
+	}
+
+	return goose.Reset(db, "migrations")
+}

@@ -6,11 +6,11 @@ package models
 import "time"
 
 // RecoveryCode stores a hashed recovery code for account recovery.
-type RecoveryCode struct { //nolint:govet // fieldalignment not critical for this model
-	ID        int64      `gorm:"primaryKey" json:"id"`
-	UserID    int64      `gorm:"not null;index" json:"user_id"`
-	CodeHash  string     `gorm:"not null" json:"-"`
-	Used      bool       `gorm:"not null;default:false" json:"used"`
-	CreatedAt time.Time  `json:"created_at"`
-	UsedAt    *time.Time `json:"used_at,omitempty"`
+type RecoveryCode struct { //nolint:govet // fieldalignment: readability over optimization
+	ID        int64      `db:"id" json:"id"`
+	UserID    int64      `db:"user_id" json:"user_id"`
+	CodeHash  string     `db:"code_hash" json:"-"`
+	Used      bool       `db:"used" json:"used"`
+	CreatedAt time.Time  `db:"created_at" json:"created_at"`
+	UsedAt    *time.Time `db:"used_at" json:"used_at,omitempty"`
 }

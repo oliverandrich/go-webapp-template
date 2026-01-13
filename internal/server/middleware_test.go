@@ -13,7 +13,6 @@ import (
 	"codeberg.org/oliverandrich/go-webapp-template/internal/config"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/i18n"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/services/session"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/testutil"
 	"github.com/labstack/echo/v4"
@@ -107,8 +106,7 @@ func TestI18nMiddleware(t *testing.T) {
 }
 
 func TestAuthMiddleware_NoSession(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	sessMgr, err := session.NewManager(&config.SessionConfig{
 		CookieName: "_session",
 		MaxAge:     3600,
@@ -143,9 +141,8 @@ func TestAuthMiddleware_NoSession(t *testing.T) {
 }
 
 func TestAuthMiddleware_WithSession(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
-	user := testutil.NewTestUser(t, db, "testuser")
+	_, repo := testutil.NewTestDB(t)
+	user := testutil.NewTestUser(t, repo, "testuser")
 
 	sessMgr, err := session.NewManager(&config.SessionConfig{
 		CookieName: "_session",
@@ -311,8 +308,7 @@ func TestCsrfToContext_WithToken(t *testing.T) {
 }
 
 func TestAuthMiddleware_InvalidSession(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	sessMgr, err := session.NewManager(&config.SessionConfig{
 		CookieName: "_session",
 		MaxAge:     3600,
@@ -351,8 +347,7 @@ func TestAuthMiddleware_InvalidSession(t *testing.T) {
 }
 
 func TestAuthMiddleware_UserNotFound(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	sessMgr, err := session.NewManager(&config.SessionConfig{
 		CookieName: "_session",
 		MaxAge:     3600,
@@ -391,8 +386,7 @@ func TestAuthMiddleware_UserNotFound(t *testing.T) {
 }
 
 func TestAuthMiddleware_NotCustomContext(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	repo := repository.New(db)
+	_, repo := testutil.NewTestDB(t)
 	sessMgr, err := session.NewManager(&config.SessionConfig{
 		CookieName: "_session",
 		MaxAge:     3600,

@@ -5,52 +5,46 @@
 package testutil
 
 import (
-	"database/sql"
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"codeberg.org/oliverandrich/go-webapp-template/internal/database"
 	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
+	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
-	_ "modernc.org/sqlite" // Pure Go SQLite driver
+	"github.com/vinovest/sqlx"
 )
 
 // NewTestDB creates an in-memory SQLite database for tests.
-func NewTestDB(t *testing.T) *gorm.DB {
+// Returns both the database connection and the repository for convenience.
+func NewTestDB(t *testing.T) (*sqlx.DB, *repository.Repository) {
 	t.Helper()
-
-	// Use modernc.org/sqlite (pure Go, no CGO)
-	sqlDB, err := sql.Open("sqlite", ":memory:")
+	db, err := database.Open(":memory:")
 	require.NoError(t, err)
-
-	db, err := gorm.Open(sqlite.New(sqlite.Config{
-		Conn: sqlDB,
-	}), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
+	t.Cleanup(func() {
+		_ = db.Close()
 	})
-	require.NoError(t, err)
-	require.NoError(t, db.AutoMigrate(models.AllModels()...))
-	return db
+	repo := repository.New(db)
+	return db, repo
 }
 
 // NewTestUser creates a test user in the database.
-func NewTestUser(t *testing.T, db *gorm.DB, username string) *models.User {
+func NewTestUser(t *testing.T, repo *repository.Repository, username string) *models.User {
 	t.Helper()
-	user := &models.User{
-		Username: username,
-	}
-	require.NoError(t, db.Create(user).Error)
+	ctx := context.Background()
+	user, err := repo.CreateUser(ctx, username)
+	require.NoError(t, err)
 	return user
 }
 
 // NewTestCredential creates a test credential for a user.
-func NewTestCredential(t *testing.T, db *gorm.DB, userID int64, name string) *models.Credential {
+func NewTestCredential(t *testing.T, repo *repository.Repository, userID int64, name string) *models.Credential {
 	t.Helper()
+	ctx := context.Background()
 	cred := &models.Credential{
 		UserID:       userID,
 		CredentialID: []byte("test-credential-id-" + name),
@@ -59,7 +53,8 @@ func NewTestCredential(t *testing.T, db *gorm.DB, userID int64, name string) *mo
 		SignCount:    0,
 		Name:         name,
 	}
-	require.NoError(t, db.Create(cred).Error)
+	err := repo.CreateCredential(ctx, cred)
+	require.NoError(t, err)
 	return cred
 }
 

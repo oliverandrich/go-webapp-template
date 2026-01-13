@@ -11,15 +11,15 @@ import (
 )
 
 // User represents an authenticated user with WebAuthn credentials.
-type User struct { //nolint:govet // fieldalignment not critical for models
-	ID              int64        `gorm:"primaryKey" json:"id"`
-	Username        string       `gorm:"uniqueIndex;not null;size:64" json:"username"`
-	Email           *string      `gorm:"uniqueIndex;size:255" json:"email,omitempty"`
-	EmailVerified   bool         `gorm:"not null;default:false" json:"email_verified"`
-	EmailVerifiedAt *time.Time   `json:"email_verified_at,omitempty"`
-	CreatedAt       time.Time    `json:"created_at"`
-	UpdatedAt       time.Time    `json:"updated_at"`
-	Credentials     []Credential `gorm:"foreignKey:UserID" json:"credentials,omitempty"`
+type User struct { //nolint:govet // fieldalignment: readability over optimization
+	ID              int64        `db:"id" json:"id"`
+	Username        string       `db:"username" json:"username"`
+	Email           *string      `db:"email" json:"email,omitempty"`
+	EmailVerified   bool         `db:"email_verified" json:"email_verified"`
+	EmailVerifiedAt *time.Time   `db:"email_verified_at" json:"email_verified_at,omitempty"`
+	CreatedAt       time.Time    `db:"created_at" json:"created_at"`
+	UpdatedAt       time.Time    `db:"updated_at" json:"updated_at"`
+	Credentials     []Credential `db:"-" json:"credentials,omitempty"`
 }
 
 // WebAuthnID returns the user's ID as a byte slice for WebAuthn.

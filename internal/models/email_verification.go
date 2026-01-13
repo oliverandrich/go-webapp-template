@@ -6,10 +6,10 @@ package models
 import "time"
 
 // EmailVerificationToken stores a hashed token for email verification.
-type EmailVerificationToken struct { //nolint:govet // fieldalignment not critical
-	ID        int64     `gorm:"primaryKey" json:"id"`
-	UserID    int64     `gorm:"not null;index" json:"user_id"`
-	TokenHash string    `gorm:"uniqueIndex;not null" json:"-"` // SHA256 hash
-	ExpiresAt time.Time `gorm:"not null" json:"expires_at"`
-	CreatedAt time.Time `json:"created_at"`
+type EmailVerificationToken struct { //nolint:govet // fieldalignment: readability over optimization
+	ID        int64     `db:"id" json:"id"`
+	UserID    int64     `db:"user_id" json:"user_id"`
+	TokenHash string    `db:"token_hash" json:"-"` // SHA256 hash
+	ExpiresAt time.Time `db:"expires_at" json:"expires_at"`
+	CreatedAt time.Time `db:"created_at" json:"created_at"`
 }
