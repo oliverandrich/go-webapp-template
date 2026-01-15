@@ -5,14 +5,14 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-cmd = "mkdir -p tmp && templ generate && rm -f static/css/styles.*.css && tailwindcss -i assets/css/input.css -o static/css/styles.dev.css && ([ -f static/js/htmx.dev.js ] || curl -sL 'https://unpkg.com/htmx.org@2/dist/htmx.min.js' -o static/js/htmx.dev.js) && go build -o ./tmp/app ./cmd/app"
+cmd = "mkdir -p tmp internal/assets/static/dist && templ generate && tailwindcss -i internal/assets/static/css/input.css -o internal/assets/static/dist/styles.css && cat internal/assets/static/js/htmx.js internal/assets/static/js/webauthn.js > internal/assets/static/dist/app.js && go build -tags dev -o ./tmp/app ./cmd/app"
 bin = "./tmp/app"
 delay = 1000
-exclude_dir = ["tmp", "vendor", "data", "static"]
+exclude_dir = ["tmp", "vendor", "data", "internal/assets/static/dist"]
 exclude_regex = ["_test.go", "_templ.go"]
 exclude_unchanged = false
 follow_symlink = false
-include_ext = ["go", "toml", "templ", "css"]
+include_ext = ["go", "toml", "templ", "css", "js"]
 kill_delay = "0s"
 log = "build-errors.log"
 send_interrupt = true

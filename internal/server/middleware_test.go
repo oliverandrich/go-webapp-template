@@ -56,20 +56,12 @@ func TestStaticCacheHeaders(t *testing.T) {
 		assert.Equal(t, "public, max-age=31536000, immutable", rec.Header().Get("Cache-Control"))
 	})
 
-	t.Run("dev asset gets no-cache", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/static/js/htmx.dev.js", nil)
-		rec := httptest.NewRecorder()
-		e.ServeHTTP(rec, req)
-
-		assert.Equal(t, "no-cache, no-store, must-revalidate", rec.Header().Get("Cache-Control"))
-	})
-
-	t.Run("regular asset gets no cache header", func(t *testing.T) {
+	t.Run("unhashed asset gets no-cache", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/static/js/htmx.js", nil)
 		rec := httptest.NewRecorder()
 		e.ServeHTTP(rec, req)
 
-		assert.Empty(t, rec.Header().Get("Cache-Control"))
+		assert.Equal(t, "no-cache, no-store, must-revalidate", rec.Header().Get("Cache-Control"))
 	})
 }
 

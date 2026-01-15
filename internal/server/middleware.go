@@ -111,10 +111,10 @@ func staticCacheHeaders() echo.MiddlewareFunc {
 			path := c.Request().URL.Path
 			if strings.HasPrefix(path, "/static/") {
 				if isHashedAsset(path) {
-					// Hashed assets get immutable caching
+					// Hashed assets get immutable caching (1 year)
 					c.Response().Header().Set("Cache-Control", "public, max-age=31536000, immutable")
-				} else if strings.Contains(path, ".dev.") {
-					// Dev assets never cache
+				} else {
+					// Unhashed assets (development mode) never cache
 					c.Response().Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 				}
 			}

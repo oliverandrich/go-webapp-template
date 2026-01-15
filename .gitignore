@@ -29,12 +29,9 @@ coverage.html
 # Generated templ files
 *_templ.go
 
-# Generated CSS
-static/css/styles.*.css
-
-# Downloaded JS (htmx)
-static/js/htmx.*.js
-static/js/htmx.dev.js
+# Generated assets (esbuild output)
+internal/assets/static/dist/
+internal/assets/esbuild-meta.json
 
 # Claude Code
 CLAUDE.md

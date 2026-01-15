@@ -24,7 +24,6 @@ templ Dashboard() {
 					</div>
 				</div>
 			</nav>
-
 			<!-- Dashboard Content -->
 			<main class="py-8 px-4">
 				<div class="max-w-2xl mx-auto">
@@ -34,7 +33,6 @@ templ Dashboard() {
 					<p class="mt-1 text-gray-600">
 						{ T(ctx, "dashboard_welcome") }
 					</p>
-
 					<div class="mt-6 grid gap-4 sm:grid-cols-2">
 						<!-- User Info Card -->
 						<div class="p-4 bg-white rounded-md border border-gray-200">
@@ -43,7 +41,6 @@ templ Dashboard() {
 								<p class="font-medium text-gray-900">{ user.Username }</p>
 							}
 						</div>
-
 						<!-- Passkeys Card -->
 						<a href="/auth/credentials" class="p-4 bg-white rounded-md border border-gray-200 hover:border-gray-300 transition-colors">
 							<p class="text-sm text-gray-500 mb-1">Security</p>

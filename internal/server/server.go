@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/oliverandrich/go-webapp-template/internal/assets"
 	"github.com/oliverandrich/go-webapp-template/internal/config"
 	"github.com/oliverandrich/go-webapp-template/internal/database"
 	"github.com/oliverandrich/go-webapp-template/internal/handlers"
@@ -88,10 +89,7 @@ func Run(ctx context.Context, cmd *cli.Command) error {
 	e.HidePort = true
 
 	// Assets
-	assets, err := findAssets()
-	if err != nil {
-		return fmt.Errorf("failed to find assets: %w", err)
-	}
+	assets := findAssets()
 
 	// Middleware
 	setupMiddleware(e, cfg, assets)
@@ -110,8 +108,8 @@ func setupRoutes(e *echo.Echo, repo *repository.Repository, wa *webauthn.Service
 	h := handlers.New(repo)
 	auth := handlers.NewAuth(repo, wa, sessions, emailSvc, authCfg)
 
-	// Static files
-	e.Static("/static", "static")
+	// Static files (served from embedded filesystem)
+	e.GET("/static/*", echo.WrapHandler(http.StripPrefix("/static/", assets.FileServer())))
 
 	// Public routes
 	e.GET("/health", h.Health)
