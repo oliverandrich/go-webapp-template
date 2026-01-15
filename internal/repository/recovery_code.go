@@ -6,7 +6,7 @@ package repository
 import (
 	"context"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
+	"github.com/oliverandrich/go-webapp-template/internal/models"
 	"golang.org/x/crypto/bcrypt"
 )
 

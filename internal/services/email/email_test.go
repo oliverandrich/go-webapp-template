@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/config"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/services/email"
+	"github.com/oliverandrich/go-webapp-template/internal/config"
+	"github.com/oliverandrich/go-webapp-template/internal/services/email"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

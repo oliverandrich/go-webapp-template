@@ -6,8 +6,8 @@ package models_test
 import (
 	"testing"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
 	"github.com/go-webauthn/webauthn/protocol"
+	"github.com/oliverandrich/go-webapp-template/internal/models"
 	"github.com/stretchr/testify/assert"
 )
 

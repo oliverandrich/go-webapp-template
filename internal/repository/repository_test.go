@@ -6,7 +6,7 @@ package repository_test
 import (
 	"testing"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/testutil"
+	"github.com/oliverandrich/go-webapp-template/internal/testutil"
 	"github.com/stretchr/testify/assert"
 )
 

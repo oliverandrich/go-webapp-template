@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/appcontext"
+	"github.com/oliverandrich/go-webapp-template/internal/appcontext"
 )
 
 // findAssets scans the static directory for hashed asset files.

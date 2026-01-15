@@ -1,4 +1,4 @@
-module codeberg.org/oliverandrich/go-webapp-template
+module github.com/oliverandrich/go-webapp-template
 
 go 1.25.0
 

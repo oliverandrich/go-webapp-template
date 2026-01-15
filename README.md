@@ -4,15 +4,15 @@ A modern, minimal Go web application template using Echo, GORM, templ, and Tailw
 
 ## Quick Start
 
-Create a new project using [gohatch](https://codeberg.org/oliverandrich/gohatch):
+Create a new project using [gohatch](https://github.com/oliverandrich/gohatch):
 
 ```bash
 # Install gohatch
-brew tap oliverandrich/tap https://codeberg.org/oliverandrich/homebrew-tap.git
+brew tap oliverandrich/tap
 brew install gohatch
 
 # Create new project
-gohatch codeberg.org/oliverandrich/go-webapp-template codeberg.org/example/myapp
+gohatch github.com/oliverandrich/go-webapp-template github.com/example/myapp
 cd myapp
 
 # Configure and run

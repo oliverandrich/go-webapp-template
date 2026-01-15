@@ -11,8 +11,8 @@ import (
 	"net/http"
 	"time"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/config"
 	"github.com/gorilla/securecookie"
+	"github.com/oliverandrich/go-webapp-template/internal/config"
 )
 
 // Data contains the session information stored in the cookie.

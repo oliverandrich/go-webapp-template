@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/htmx"
+	"github.com/oliverandrich/go-webapp-template/internal/htmx"
 	"github.com/stretchr/testify/assert"
 )
 

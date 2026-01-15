@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/config"
+	"github.com/oliverandrich/go-webapp-template/internal/config"
 	"golang.org/x/crypto/acme/autocert"
 )
 

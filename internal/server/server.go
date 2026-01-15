@@ -17,15 +17,15 @@ import (
 	"syscall"
 	"time"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/config"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/database"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/handlers"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/i18n"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/services/email"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/services/session"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/services/webauthn"
 	"github.com/labstack/echo/v4"
+	"github.com/oliverandrich/go-webapp-template/internal/config"
+	"github.com/oliverandrich/go-webapp-template/internal/database"
+	"github.com/oliverandrich/go-webapp-template/internal/handlers"
+	"github.com/oliverandrich/go-webapp-template/internal/i18n"
+	"github.com/oliverandrich/go-webapp-template/internal/repository"
+	"github.com/oliverandrich/go-webapp-template/internal/services/email"
+	"github.com/oliverandrich/go-webapp-template/internal/services/session"
+	"github.com/oliverandrich/go-webapp-template/internal/services/webauthn"
 	"github.com/urfave/cli/v3"
 )
 

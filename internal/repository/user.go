@@ -8,7 +8,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
+	"github.com/oliverandrich/go-webapp-template/internal/models"
 )
 
 // CreateUser creates a new user with only a username.

@@ -7,7 +7,7 @@ import (
 	"context"
 	"time"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
+	"github.com/oliverandrich/go-webapp-template/internal/models"
 )
 
 // CreateEmailVerificationToken creates a new email verification token.

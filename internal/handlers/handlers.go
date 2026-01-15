@@ -6,9 +6,9 @@ package handlers
 import (
 	"net/http"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/templates"
 	"github.com/labstack/echo/v4"
+	"github.com/oliverandrich/go-webapp-template/internal/repository"
+	"github.com/oliverandrich/go-webapp-template/internal/templates"
 )
 
 // Handlers contains all HTTP handlers.

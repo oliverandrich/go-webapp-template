@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/config"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/i18n"
+	"github.com/oliverandrich/go-webapp-template/internal/config"
+	"github.com/oliverandrich/go-webapp-template/internal/i18n"
 	"github.com/wneessen/go-mail"
 )
 

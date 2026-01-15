@@ -5,9 +5,9 @@
 package appcontext
 
 import (
-	"codeberg.org/oliverandrich/go-webapp-template/internal/htmx"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
 	"github.com/labstack/echo/v4"
+	"github.com/oliverandrich/go-webapp-template/internal/htmx"
+	"github.com/oliverandrich/go-webapp-template/internal/models"
 )
 
 // Context keys for storing values in context.Context.

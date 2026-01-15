@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/services/recovery"
+	"github.com/oliverandrich/go-webapp-template/internal/services/recovery"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"

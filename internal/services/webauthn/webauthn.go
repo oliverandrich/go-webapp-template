@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/config"
 	"github.com/go-webauthn/webauthn/webauthn"
+	"github.com/oliverandrich/go-webapp-template/internal/config"
 )
 
 const sessionTTL = 2 * time.Minute

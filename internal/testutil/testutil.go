@@ -11,10 +11,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/database"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
 	"github.com/labstack/echo/v4"
+	"github.com/oliverandrich/go-webapp-template/internal/database"
+	"github.com/oliverandrich/go-webapp-template/internal/models"
+	"github.com/oliverandrich/go-webapp-template/internal/repository"
 	"github.com/stretchr/testify/require"
 	"github.com/vinovest/sqlx"
 )

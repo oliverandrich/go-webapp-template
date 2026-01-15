@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/database"
+	"github.com/oliverandrich/go-webapp-template/internal/database"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

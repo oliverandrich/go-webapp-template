@@ -7,8 +7,8 @@ import (
 	"context"
 	"testing"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/services/recovery"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/testutil"
+	"github.com/oliverandrich/go-webapp-template/internal/services/recovery"
+	"github.com/oliverandrich/go-webapp-template/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

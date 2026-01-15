@@ -8,10 +8,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/handlers"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/i18n"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/testutil"
 	"github.com/labstack/echo/v4"
+	"github.com/oliverandrich/go-webapp-template/internal/handlers"
+	"github.com/oliverandrich/go-webapp-template/internal/i18n"
+	"github.com/oliverandrich/go-webapp-template/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/language"

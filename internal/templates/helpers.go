@@ -6,9 +6,9 @@ package templates
 import (
 	"context"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/appcontext"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/i18n"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
+	"github.com/oliverandrich/go-webapp-template/internal/appcontext"
+	"github.com/oliverandrich/go-webapp-template/internal/i18n"
+	"github.com/oliverandrich/go-webapp-template/internal/models"
 )
 
 // CSRFToken returns the CSRF token from the context.

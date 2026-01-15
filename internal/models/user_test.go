@@ -7,7 +7,7 @@ import (
 	"encoding/binary"
 	"testing"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
+	"github.com/oliverandrich/go-webapp-template/internal/models"
 	"github.com/stretchr/testify/assert"
 )
 

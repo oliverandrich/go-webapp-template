@@ -10,14 +10,14 @@ import (
 	"net/http"
 	"strings"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/appcontext"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/config"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/htmx"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/i18n"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/services/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/oliverandrich/go-webapp-template/internal/appcontext"
+	"github.com/oliverandrich/go-webapp-template/internal/config"
+	"github.com/oliverandrich/go-webapp-template/internal/htmx"
+	"github.com/oliverandrich/go-webapp-template/internal/i18n"
+	"github.com/oliverandrich/go-webapp-template/internal/repository"
+	"github.com/oliverandrich/go-webapp-template/internal/services/session"
 )
 
 func setupMiddleware(e *echo.Echo, cfg *config.Config, assets *appcontext.Assets) {

@@ -6,8 +6,8 @@ package appcontext_test
 import (
 	"testing"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/appcontext"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
+	"github.com/oliverandrich/go-webapp-template/internal/appcontext"
+	"github.com/oliverandrich/go-webapp-template/internal/models"
 	"github.com/stretchr/testify/assert"
 )
 

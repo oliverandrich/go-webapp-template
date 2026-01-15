@@ -10,18 +10,18 @@ import (
 	"strconv"
 	"time"
 
-	"codeberg.org/oliverandrich/go-webapp-template/internal/appcontext"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/config"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/models"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/repository"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/services/email"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/services/recovery"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/services/session"
-	"codeberg.org/oliverandrich/go-webapp-template/internal/services/webauthn"
-	authtpl "codeberg.org/oliverandrich/go-webapp-template/internal/templates/auth"
 	gowebauthn "github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/oliverandrich/go-webapp-template/internal/appcontext"
+	"github.com/oliverandrich/go-webapp-template/internal/config"
+	"github.com/oliverandrich/go-webapp-template/internal/models"
+	"github.com/oliverandrich/go-webapp-template/internal/repository"
+	"github.com/oliverandrich/go-webapp-template/internal/services/email"
+	"github.com/oliverandrich/go-webapp-template/internal/services/recovery"
+	"github.com/oliverandrich/go-webapp-template/internal/services/session"
+	"github.com/oliverandrich/go-webapp-template/internal/services/webauthn"
+	authtpl "github.com/oliverandrich/go-webapp-template/internal/templates/auth"
 )
 
 // AuthHandlers contains handlers for authentication.
