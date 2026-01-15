@@ -33,11 +33,12 @@ htmx-update:
 
 # Build the app binary (with embedded assets)
 build: templ css bundle
-    go build -o app ./cmd/app
+    mkdir -p dist
+    go build -o dist/app ./cmd/app
 
 # Run the app
 run: build
-    ./app
+    ./dist/app
 
 # Run with hot-reload (requires: go install github.com/air-verse/air@latest)
 dev:
@@ -63,7 +64,7 @@ fmt:
 
 # Clean build artifacts
 clean:
-    rm -f app
+    rm -rf dist/
     rm -f coverage.out coverage.html
     rm -rf tmp/
     rm -rf internal/assets/static/dist/
